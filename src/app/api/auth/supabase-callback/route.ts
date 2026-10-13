@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSupabaseRouteClient } from '@/lib/supabase/route-client';
 import { resolveIdentity } from '@/lib/supabase/resolve-identity';
 import { createBridgeToken } from '@/lib/supabase/bridge-token';
+import { getPublicOrigin } from '@/lib/origin';
 
 /**
  * GET /api/auth/supabase-callback?code=…   (migration gate G7)
@@ -20,11 +21,14 @@ import { createBridgeToken } from '@/lib/supabase/bridge-token';
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  // Proxy-aware public origin (see src/lib/origin.ts) — using url.origin
+  // behind a preview/Vercel proxy would bounce the user to localhost.
+  const publicOrigin = getPublicOrigin(request);
   const code = url.searchParams.get('code');
   const oauthError = url.searchParams.get('error_description') || url.searchParams.get('error');
 
   const fail = (reason: string) =>
-    NextResponse.redirect(new URL(`/auth/oauth-complete?error=${reason}`, url.origin));
+    NextResponse.redirect(new URL(`/auth/oauth-complete?error=${reason}`, publicOrigin));
 
   if (oauthError) {
     console.error('Supabase OAuth error from provider:', oauthError);
@@ -74,6 +78,6 @@ export async function GET(request: Request) {
   if (!token) return fail('bridge_token_failed');
 
   return NextResponse.redirect(
-    new URL(`/auth/oauth-complete?token=${encodeURIComponent(token)}`, url.origin),
+    new URL(`/auth/oauth-complete?token=${encodeURIComponent(token)}`, publicOrigin),
   );
 }

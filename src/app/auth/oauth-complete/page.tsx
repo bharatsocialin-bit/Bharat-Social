@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -15,6 +15,11 @@ import { Loader2, AlertCircle } from 'lucide-react';
  * Error states derived from URL params render synchronously; only async
  * signIn failures use state. The single-shot guard prevents React 18
  * StrictMode double-invoke from firing signIn twice.
+ *
+ * NOTE: useSearchParams() requires a <Suspense> boundary above the
+ * component that calls it, otherwise `next build` fails prerendering with
+ * "useSearchParams() should be wrapped in a suspense boundary" (this exact
+ * error broke the Vercel deployments of G7). Hence the wrapper below.
  */
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -30,7 +35,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   session_failed: 'Could not sign you in. Please try again.',
 };
 
-export default function OAuthCompletePage() {
+function OAuthCompleteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const attempted = useRef(false);
@@ -103,5 +108,27 @@ export default function OAuthCompletePage() {
         )}
       </div>
     </div>
+  );
+}
+
+function OAuthCompleteFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-border bg-card p-8 text-center shadow-xl">
+        <Loader2 className="h-10 w-10 animate-spin text-saffron" />
+        <h1 className="text-lg font-bold text-white">Signing you in…</h1>
+        <p className="text-sm text-muted-foreground">
+          Completing your secure sign-in. This only takes a moment.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default function OAuthCompletePage() {
+  return (
+    <Suspense fallback={<OAuthCompleteFallback />}>
+      <OAuthCompleteContent />
+    </Suspense>
   );
 }
