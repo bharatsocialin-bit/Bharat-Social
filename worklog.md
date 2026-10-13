@@ -927,3 +927,31 @@ Stage Summary:
 - .env, db/*.db, public/uploads, node_modules correctly excluded via .gitignore.
 - Future pushes work via stored credentials (no re-auth needed).
 - NOTE: user pasted PAT into chat — recommend revoking/rotating it once sync workflow is stable, or letting user know it remains visible in chat history.
+
+---
+Task ID: 18
+Agent: Super Z (main)
+Task: Migrate BharatSocial database from local SQLite to user's Supabase Postgres (project qqvwagwbskhuekffvggn, ap-south-1).
+
+Work Log:
+- TCP pre-check: pooler ports 5432 + 6543 open from environment; direct db host IPv6-only (avoided)
+- Backed up prisma/schema.prisma -> prisma/schema.sqlite.bak.prisma; switched provider sqlite -> postgresql
+- Verified auth on both session (5432) and transaction (6543) poolers: PostgreSQL 17.11
+- prisma db push over session pooler: 25 tables created in Supabase (23s)
+- Seeded to Supabase: 33 badges, 30 base quiz questions + 7 achievements, import batches 1-9 (914), bulk import -> TOTAL 1,001/1,001 published questions, gap 0
+- DEBUG JOURNEY (important for future agents):
+  1. App 500s: "URL must start with postgresql://" — cause: the container shell bootstrap exports DATABASE_URL=file:/home/z/my-project/db/custom.db into EVERY shell session; real env vars override .env in Next/bun. Restarted server still inherited it.
+  2. Fix: launch dev server with `env -u DATABASE_URL bun run dev` so .env (transaction pooler URL) wins.
+  3. Second gotcha: launching with `nohup ... &` WITHOUT subshell parentheses died when the tool call ended; must use `(nohup ... &)` pattern.
+- Final .env: DATABASE_URL=postgresql://postgres.qqvwagwbskhuekffvggn:[PW]@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1 (+ NEXTAUTH_SECRET rotated earlier, NEXTAUTH_URL)
+- Verified end-to-end against Supabase: home 200; /api/quiz/categories (11 cats, cat-gk=92); /api/badges (33); /api/posts (empty); /api/quiz/daily (generated from fallback algo); /api/pulse/trending OK
+- WRITE test: POST /api/register created user josh (cmv6zfayo0000r9zcef9jkbua) in Supabase over pgbouncer — inserts work
+- Counts confirmed in Supabase: users 1, questions 1001, badges 33, achievements 7
+- Committed + pushed migration gate G6 to GitHub: 0e77218..6224a01 main
+
+Stage Summary:
+- App now runs entirely on Supabase Postgres (transaction pooler, pgbouncer=true&connection_limit=1)
+- Local SQLite db/custom.db remains as a pre-migration snapshot (schema backup: prisma/schema.sqlite.bak.prisma)
+- NOTE: DB password was shared in chat; stored only in gitignored .env. Recommend rotating via Supabase dashboard later.
+- RLS is disabled on all Supabase tables (matches old staging project) — fine while app connects via service-level Postgres connection; revisit before exposing Supabase REST API
+- QuizDailySet table empty by design (daily API uses deterministic fallback until admin curates sets)
