@@ -1,0 +1,291 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ─────────────────────────────────────────────────────────────────────────
+   BharatSocial — Brand Theme v3 (Tricolor Redesign)
+   Inspired by the Indian flag: saffron + green + navy on warm ivory.
+   To rebrand: change the variables in :root below.
+   ──────────────────────────────────────────────────────────────────────── */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-indic: var(--font-noto-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /* Brand tokens — the three tricolor colors */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-saffron: var(--saffron);
+  --color-saffron-foreground: var(--saffron-foreground);
+  --color-saffron-soft: var(--saffron-soft);
+  --color-india-green: var(--india-green);
+  --color-india-green-foreground: var(--india-green-foreground);
+  --color-india-green-soft: var(--india-green-soft);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
+  --color-navy-soft: var(--navy-soft);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.875rem;
+
+  /* ── UNIFIED DARK NAVY DASHBOARD THEME ───────────────────────────────── */
+  --background: #061A2F;                         /* main background — deep midnight navy */
+  --foreground: #FFFFFF;                         /* primary text — white */
+
+  --card: #102842;                               /* card background — slightly lighter navy */
+  --card-foreground: #FFFFFF;
+
+  --popover: #142E49;                             /* elevated card background */
+  --popover-foreground: #FFFFFF;
+
+  /* ── Brand — Saffron (primary action) ────────────────────────────────── */
+  --saffron: #FF9933;
+  --saffron-foreground: #FFFFFF;
+  --saffron-soft: rgba(255, 153, 51, 0.12);
+
+  /* ── India Green (secondary action / success) ────────────────────────── */
+  --india-green: #20C875;
+  --india-green-foreground: #FFFFFF;
+  --india-green-soft: rgba(32, 200, 117, 0.12);
+
+  /* ── Navy Blue (headings, nav text, logo) ─────────────────────────────── */
+  --navy: #93C5FD;
+  --navy-foreground: #061A2F;
+  --navy-soft: rgba(147, 197, 253, 0.12);
+
+  /* Map brand → saffron so `bg-brand` = saffron across the app. */
+  --brand: var(--saffron);
+  --brand-foreground: var(--saffron-foreground);
+  --brand-soft: var(--saffron-soft);
+
+  /* Map primary → saffron for shadcn components. */
+  --primary: var(--saffron);
+  --primary-foreground: var(--saffron-foreground);
+
+  --secondary: #142E49;                           /* elevated surface — secondary */
+  --secondary-foreground: #FFFFFF;
+
+  --muted: #102842;                               /* card-level muted surface */
+  --muted-foreground: #B8C7D9;                     /* secondary text — blue-grey */
+
+  --accent: var(--saffron-soft);
+  --accent-foreground: var(--saffron);
+
+  --destructive: #EF4444;
+
+  --border: #263F59;                              /* blue-grey border */
+  --input: #263F59;
+  --ring: var(--saffron);
+
+  --chart-1: var(--saffron);
+  --chart-2: var(--india-green);
+  --chart-3: #93C5FD;
+  --chart-4: #7C3AED;
+  --chart-5: #EC4899;
+
+  --sidebar: #081D33;                             /* sidebar — slightly lighter than main bg */
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: var(--saffron);
+  --sidebar-primary-foreground: var(--saffron-foreground);
+  --sidebar-accent: var(--saffron-soft);
+  --sidebar-accent-foreground: var(--saffron);
+  --sidebar-border: #263F59;
+  --sidebar-ring: var(--saffron);
+}
+
+.dark {
+  --background: oklch(0.15 0.01 260);
+  --foreground: oklch(0.95 0.005 85);
+
+  --card: oklch(0.20 0.012 260);
+  --card-foreground: oklch(0.95 0.005 85);
+
+  --popover: oklch(0.20 0.012 260);
+  --popover-foreground: oklch(0.95 0.005 85);
+
+  --saffron: #FF9933;
+  --saffron-foreground: oklch(0.15 0.01 260);
+  --saffron-soft: oklch(0.28 0.04 60);
+
+  --india-green: #138808;
+  --india-green-foreground: oklch(0.15 0.01 260);
+  --india-green-soft: oklch(0.25 0.04 145);
+
+  --navy: #4A4AB8;
+  --navy-foreground: oklch(0.15 0.01 260);
+  --navy-soft: oklch(0.27 0.03 260);
+
+  --brand: var(--saffron);
+  --brand-foreground: var(--saffron-foreground);
+  --brand-soft: var(--saffron-soft);
+
+  --primary: var(--saffron);
+  --primary-foreground: var(--saffron-foreground);
+
+  --secondary: oklch(0.26 0.01 260);
+  --secondary-foreground: oklch(0.95 0.005 85);
+
+  --muted: oklch(0.24 0.01 260);
+  --muted-foreground: oklch(0.70 0.01 260);
+
+  --accent: var(--saffron-soft);
+  --accent-foreground: var(--saffron);
+
+  --destructive: oklch(0.70 0.19 22);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: var(--saffron);
+
+  --chart-1: var(--saffron);
+  --chart-2: var(--india-green);
+  --chart-3: var(--navy);
+  --chart-4: oklch(0.65 0.18 305);
+  --chart-5: oklch(0.70 0.14 250);
+
+  --sidebar: oklch(0.20 0.012 260);
+  --sidebar-foreground: oklch(0.95 0.005 85);
+  --sidebar-primary: var(--saffron);
+  --sidebar-primary-foreground: var(--saffron-foreground);
+  --sidebar-accent: var(--saffron-soft);
+  --sidebar-accent-foreground: var(--saffron);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: var(--saffron);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-geist-sans), var(--font-noto-sans), system-ui, sans-serif;
+  }
+  /* Headings — white on dark dashboard */
+  h1, h2, h3, h4, h5, h6 {
+    color: #FFFFFF;
+  }
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────────── */
+
+@layer utilities {
+  /* Text color helpers */
+  .text-navy { color: var(--navy); }
+  .text-saffron { color: var(--saffron); }
+  .text-india-green { color: var(--india-green); }
+  .bg-navy { background-color: var(--navy); }
+  .bg-saffron { background-color: var(--saffron); }
+  .bg-india-green { background-color: var(--india-green); }
+  .bg-saffron-soft { background-color: var(--saffron-soft); }
+  .bg-india-green-soft { background-color: var(--india-green-soft); }
+  .bg-navy-soft { background-color: var(--navy-soft); }
+  .border-saffron { border-color: var(--saffron); }
+  .border-india-green { border-color: var(--india-green); }
+  .border-navy { border-color: var(--navy); }
+  .ring-saffron { --tw-ring-color: var(--saffron); }
+  .ring-india-green { --tw-ring-color: var(--india-green); }
+  .ring-navy { --tw-ring-color: var(--navy); }
+
+  /* Tricolor gradient — for hero accents and special elements */
+  .bg-tricolor-vertical {
+    background: linear-gradient(180deg, var(--saffron) 0%, var(--saffron) 33%, #FFFFFF 33%, #FFFFFF 66%, var(--india-green) 66%, var(--india-green) 100%);
+  }
+  .bg-tricolor-horizontal {
+    background: linear-gradient(90deg, var(--saffron) 0%, var(--saffron) 33%, #FFFFFF 33%, #FFFFFF 66%, var(--india-green) 66%, var(--india-green) 100%);
+  }
+
+  /* Saffron→Green brand gradient for hero banners */
+  .bg-brand-hero {
+    background: linear-gradient(135deg, var(--saffron) 0%, #FFB366 40%, var(--india-green) 100%);
+  }
+
+  /* Soft card shadow — lifts cards off the ivory background */
+  .shadow-soft {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+  .shadow-soft-md {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Scrollbar styles */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.82 0.01 75) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: oklch(0.85 0.012 75);
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(0.72 0.02 70);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Snap scrolling for Shorts */
+  .snap-y-mandatory {
+    scroll-snap-type: y mandatory;
+  }
+  .snap-start {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

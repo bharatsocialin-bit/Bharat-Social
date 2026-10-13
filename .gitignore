@@ -1,2 +1,105 @@
-skills/
+# ============================================================
+# BharatSocial .gitignore
+# See https://help.github.com/articles/ignoring-files/ for more details.
+# ============================================================
+
+# ── Dependencies ────────────────────────────────────────────
 node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ── Testing ─────────────────────────────────────────────────
+/coverage
+
+# ── Next.js build output ─────────────────────────────────────
+/.next/
+/out/
+
+# ── Production build ─────────────────────────────────────────
+/build
+
+# ── Misc OS files ─────────────────────────────────────────────
+.DS_Store
+*.pem
+
+# ── Debug logs ───────────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+dev.log
+dev.out.log
+server.log
+
+# ── Environment files (NEVER commit secrets) ─────────────────
+.env
+.env.*
+!.env.example
+# Explicitly exclude any env file that might be created:
+.env.local
+.env.development
+.env.production
+.env.staging
+
+# ── Vercel ───────────────────────────────────────────────────
+.vercel/
+
+# ── TypeScript ───────────────────────────────────────────────
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Local-only files ─────────────────────────────────────────
+local-*
+.claude
+.z-ai-config
+prompt
+
+# ── SQLite databases (NEVER commit — contain user password hashes) ──
+db/*.db
+db/*.db.bak*
+db/*.sqlite
+db/*.sqlite3
+# Keep the db/ directory itself (it will be created on first run)
+!db/.gitkeep
+
+# ── Prisma generated clients (never commit — regenerated from schema) ──
+node_modules/.prisma/
+
+# ── Prisma migrations (created at migration gate G4, not yet) ──
+# NOTE: prisma/migrations/ WILL be committed once the PostgreSQL migration
+# is created. For now, exclude it so we don't commit a partial state.
+prisma/migrations/
+
+# ── Shorts uploads (user-uploaded videos — never commit) ──
+/public/uploads/
+
+# ── Skills directory (scaffold-only, not application source) ──
+/skills/
+
+# ── Download directory (screenshots — not source code) ──
+/download/
+
+# ── Upload directory (legacy uploaded images — not source code) ──
+/upload/
+
+# ── Tool results (debug output) ──
+/tool-results/
+
+# ── Tests directory (runtime build scripts — not application tests) ──
+/tests/
+
+# ── Mini-services (scaffold-only) ──
+/mini-services/
+
+# ── Z-scripts (scaffold dev tooling — not application source) ──
+/.zscripts/
+
+# ── Backup files ──
+*.bak
+*.bak.*

@@ -1,0 +1,606 @@
+// Prisma schema for BharatSocial
+// Supports both SQLite (local dev) and PostgreSQL (production).
+// The provider is controlled by the DATABASE_URL environment variable.
+// To switch to PostgreSQL, set DATABASE_URL to a postgresql:// connection string.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Defaults to sqlite for local dev. For production, set DATABASE_URL to a
+  // PostgreSQL connection string and this provider will be inferred automatically.
+  // If you need to explicitly set it, use "postgresql" for production.
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ── Users & Auth ───────────────────────────────────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  username       String   @unique
+  passwordHash   String
+  name           String?
+  bio            String?
+  avatarGradient String   @default("from-sky-500 to-indigo-500")
+  initials       String   @default("Ne")
+  state          String?
+  city           String?
+  role           String   @default("user") // "user" | "admin"
+  suspended      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  posts                  Post[]
+  likes                  Like[]
+  comments               Comment[]
+  bookmarks              Bookmark[]
+  reposts                Repost[]
+  shorts                 Short[]
+  shortLikes             ShortLike[]
+  shortComments          ShortComment[]
+  shortReposts           ShortRepost[]
+  quizAttempts           QuizAttempt[]
+  userAchievements       UserAchievement[]
+  userBadges             UserBadge[]
+  badgeProgress          BadgeProgress[]
+  // The user's chosen featured badge (optional). Set via PATCH /api/badges/[id]/feature.
+  featuredBadgeId        String?
+  followers              Follow[]           @relation("follower")
+  following              Follow[]           @relation("following")
+  notifications          Notification[]     @relation("notificationRecipient")
+  triggeredNotifications Notification[]     @relation("notificationActor")
+  reportsMade            Report[]           @relation("reportReporter")
+  blocksMade             Block[]            @relation("blocker")
+  blockedBy              Block[]            @relation("blocked")
+  moderationActions      ModerationAction[] @relation("moderationAdmin")
+  quizQuestionsCreated   QuizQuestion[]     @relation("quizQuestionCreator")
+  quizDailySetsCreated   QuizDailySet[]     @relation("quizDailySetCreator")
+
+  @@index([username])
+  @@index([email])
+}
+
+// ── Posts ──────────────────────────────────────────────────────────────────
+
+model Post {
+  id        String    @id @default(cuid())
+  content   String
+  language  String    @default("en")
+  authorId  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft-delete: null = active, set = removed by admin
+
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes     Like[]
+  comments  Comment[]
+  bookmarks Bookmark[]
+  reposts   Repost[]
+  reports   Report[]
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+// ── Likes ──────────────────────────────────────────────────────────────────
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId]) // Prevents duplicate likes
+  @@index([postId])
+  @@index([userId])
+}
+
+// ── Comments ───────────────────────────────────────────────────────────────
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  language  String   @default("en")
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
+}
+
+// ── Bookmarks ──────────────────────────────────────────────────────────────
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId]) // Prevents duplicate bookmarks
+  @@index([userId])
+}
+
+// ── Follows ────────────────────────────────────────────────────────────────
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId]) // Prevents duplicate follows
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ── Notifications ──────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String // "follow" | "like" | "comment" — upgrade to enum in PostgreSQL
+  userId    String // Recipient
+  actorId   String // Who triggered it
+  postId    String? // Related post (if applicable)
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user  User @relation("notificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor User @relation("notificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+}
+
+// ── Reposts ────────────────────────────────────────────────────────────────
+
+model Repost {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId]) // Prevents duplicate reposts
+  @@index([postId])
+  @@index([userId])
+}
+
+// ── Reports (moderation) ───────────────────────────────────────────────────
+
+model Report {
+  id             String   @id @default(cuid())
+  reporterId     String
+  reportedUserId String?
+  postId         String?
+  shortId        String?
+  reason         String
+  status         String   @default("pending") // "pending" | "reviewed" | "dismissed"
+  createdAt      DateTime @default(now())
+
+  reporter User   @relation("reportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  post     Post?  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  short    Short? @relation(fields: [shortId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+  @@index([status])
+  @@index([reportedUserId])
+  @@index([shortId])
+}
+
+// ── Blocks ─────────────────────────────────────────────────────────────────
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId]) // Prevents duplicate blocks
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+// ── Moderation Actions (audit trail) ────────────────────────────────────────
+
+model ModerationAction {
+  id             String   @id @default(cuid())
+  adminId        String
+  action         String // "post_deleted" | "post_restored" | "user_suspended" | "user_reactivated" | "report_updated" | "short_deleted" | "short_restored" | "quiz_question_published" | "quiz_question_unpublished" | "quiz_question_deleted" | "badge_activated" | "badge_deactivated" | "badge_description_updated" | "badge_manually_awarded" | "badge_manually_revoked" | "badge_reconciliation" | "story_created" | "story_status_changed" | "story_deleted"
+  targetUserId   String?
+  targetPostId   String?
+  targetShortId  String?
+  targetReportId String?
+  targetStoryId  String?
+  targetBadgeId  String?
+  description    String // Non-sensitive summary, max 500 chars
+  createdAt      DateTime @default(now())
+
+  admin User @relation("moderationAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ── Pulse Stories (India Pulse — community signal) ─────────────────────────
+
+model PulseStory {
+  id             String   @id @default(cuid())
+  title          String
+  summary        String
+  region         String? // State or city name
+  language       String   @default("en")
+  status         String   @default("unverified") // "unverified" | "corroborated" | "confirmed"
+  evidenceSource String? // URL or description of supporting source
+  evidenceNote   String? // Why this status was assigned
+  postIds        String   @default("[]") // JSON array of related post IDs
+  createdBy      String? // Admin who created the story (null = system)
+  updatedBy      String? // Admin who last updated the status
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+  @@index([region])
+  @@index([createdAt])
+}
+
+// ── Shorts — short-form vertical video ────────────────────────────────────
+//
+// Storage model: the `videoStorageKey` field holds a RELATIVE path under
+// `public/uploads/shorts/` (e.g. "uploads/shorts/abc123.mp4"). The API
+// resolves this into a served URL like `/uploads/shorts/abc123.mp4`.
+//
+// We deliberately do NOT store video binaries inside the database itself —
+// SQLite is not designed for large BLOB storage. Files live on the
+// filesystem; the DB only stores metadata.
+//
+// For local development we use the local filesystem under `public/uploads/`.
+// In production this would be replaced by S3, Supabase Storage, a CDN, etc.
+// The schema is identical — only the storage backend changes.
+
+model Short {
+  id               String    @id @default(cuid())
+  creatorId        String
+  caption          String
+  hashtags         String    @default("[]") // JSON array of strings
+  language         String    @default("en")
+  videoStorageKey  String // relative path under /public/, e.g. "uploads/shorts/abc.mp4"
+  thumbnailUrl     String? // optional small poster image URL (also under /uploads/)
+  duration         Float? // seconds
+  audioTitle       String?
+  moderationStatus String    @default("active") // "active" | "removed"
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime? // Soft-delete: null = active, set = hidden
+
+  creator  User           @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  likes    ShortLike[]
+  comments ShortComment[]
+  reposts  ShortRepost[]
+  reports  Report[]
+
+  @@index([creatorId])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([moderationStatus])
+}
+
+model ShortLike {
+  id        String   @id @default(cuid())
+  shortId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  short Short @relation(fields: [shortId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shortId, userId]) // Prevents duplicate likes
+  @@index([shortId])
+  @@index([userId])
+}
+
+model ShortComment {
+  id        String   @id @default(cuid())
+  content   String
+  language  String   @default("en")
+  shortId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  short Short @relation(fields: [shortId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([shortId])
+  @@index([userId])
+}
+
+model ShortRepost {
+  id        String   @id @default(cuid())
+  shortId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  short Short @relation(fields: [shortId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shortId, userId]) // Prevents duplicate reposts
+  @@index([shortId])
+  @@index([userId])
+}
+
+// ── India Quiz ─────────────────────────────────────────────────────────────
+//
+// Storage model:
+//   - QuizQuestion: stores the question text, four options as a JSON array,
+//     the correct option index (0-3), an explanation, a source/citation
+//     note, the category slug, difficulty, language, optional time limit,
+//     and a published flag. The correct answer is NEVER exposed in the
+//     public "list questions" endpoint — only the admin endpoints return it.
+//   - QuizAttempt: stores one complete quiz play-through. Each attempt
+//     includes the question IDs asked, the user's selected options
+//     (JSON array of {questionId, selectedOptionId}), the server-computed
+//     score, and timestamps.
+//   - QuizDailySet: one row per IST date, linking a date to a set of
+//     question IDs. Admins curate these; if no row exists for today, the
+//     daily challenge falls back to a randomized selection from active
+//     questions.
+//   - QuizAchievement / UserAchievement: badges with a server-side
+//     award mechanism. Achievements are static config; UserAchievement
+//     is the join table tracking which users have earned which badges.
+
+model QuizQuestion {
+  id                      String   @id @default(cuid())
+  categoryId              String // e.g. "cat-history", "cat-geography"
+  text                    String // English text — always present
+  // JSON-encoded translations: {"hi": "...", "te": "..."}
+  translations            String   @default("{}")
+  // JSON-encoded options array: [{id:"a",text:"...",translations:{hi:"..."}},...]
+  options                 String
+  // Index (0-3) into the options array. Stored as Int to make it easy to
+  // compare server-side without serializing strings.
+  correctOptionIndex      Int
+  explanation             String
+  // JSON-encoded explanation translations.
+  explanationTranslations String   @default("{}")
+  source                  String? // citation note
+  difficulty              String   @default("medium") // "easy" | "medium" | "hard"
+  language                String   @default("en")
+  timeLimitSeconds        Int? // optional per-question timer
+  published               Boolean  @default(false)
+  createdBy               String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  creator User? @relation("quizQuestionCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([categoryId])
+  @@index([published])
+  @@index([difficulty])
+  @@index([createdAt])
+}
+
+model QuizAttempt {
+  id             String   @id @default(cuid())
+  userId         String
+  type           String // "category" | "daily"
+  refId          String // categoryId (for type=category) or YYYY-MM-DD (for type=daily)
+  // JSON-encoded array of question IDs asked in this attempt
+  questionIds    String
+  // JSON-encoded array of {questionId, selectedOptionIndex, correct, points, timeTakenSeconds}
+  answers        String
+  totalPoints    Int
+  correctCount   Int
+  totalQuestions Int
+  startedAt      DateTime
+  finishedAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type, refId])
+  @@index([finishedAt])
+}
+
+model QuizDailySet {
+  id          String   @id @default(cuid())
+  // IST date in YYYY-MM-DD format. Unique per date.
+  date        String   @unique
+  // JSON-encoded array of question IDs for this date's challenge
+  questionIds String
+  title       String
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator User? @relation("quizDailySetCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([date])
+}
+
+model QuizAchievement {
+  id                      String   @id @default(cuid())
+  // Stable slug for code-side lookup, e.g. "first-quiz", "perfect-score"
+  slug                    String   @unique
+  name                    String
+  description             String
+  // JSON-encoded translations
+  nameTranslations        String   @default("{}")
+  descriptionTranslations String   @default("{}")
+  icon                    String // lucide icon name
+  gradient                String // tailwind gradient classes
+  // Criteria type — used by the server-side award checker
+  criteriaType            String // "first-quiz" | "perfect-score" | "seven-day-streak" | "category-expert" | "daily-player" | "ten-quizzes" | "five-hundred-points"
+  criteriaValue           Int? // e.g. 7 for seven-day-streak, 2 for category-expert
+  createdAt               DateTime @default(now())
+
+  userAchievements UserAchievement[]
+
+  @@index([criteriaType])
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  awardedAt     DateTime @default(now())
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement QuizAchievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId]) // prevents duplicate awards
+  @@index([userId])
+  @@index([achievementId])
+}
+
+// ── Badges & Achievements ──────────────────────────────────────────────────
+//
+// Comprehensive badge system covering 5 groups:
+//   A. India Quiz badges (10) — completion, accuracy, categories, correct answers
+//   B. Streak badges (6) — 3, 7, 14, 30, 100, 365 days
+//   C. Points badges (5) — 100, 500, 1500, 3000, 10000 points
+//   D. Chat/community badges (5) — gated by features that don't exist yet
+//      (kept `active=false` until the corresponding real feature ships)
+//   E. Platform exploration badges (7) — profile, posts, follows, shorts
+//
+// Storage model:
+//   - `Badge` is the static definition (slug, name, rarity, criteria config).
+//     Seeded idempotently — slug is the natural key.
+//   - `UserBadge` is the awarded-instance join table (userId + badgeId).
+//     Unique constraint prevents duplicate awards per user per badge.
+//   - `BadgeProgress` tracks progress toward not-yet-earned badges
+//     (e.g. "7 / 30 days", "120 / 500 correct answers"). Updated after
+//     each qualifying activity. Optional — used by the UI to render progress
+//     bars for locked badges.
+//
+// SECURITY:
+//   - Awards are made by the server-side evaluator after validating the
+//     triggering activity. The browser NEVER claims a badge.
+//   - The unique constraint on UserBadge [userId, badgeId] makes awards
+//     idempotent and protects against race conditions.
+//   - Points come from server-side scoring of real activities (quiz
+//     attempts). Likes, comments, follows must come from real, non-self,
+//     non-deleted activities.
+//   - Badges have NO cash value.
+
+model Badge {
+  id                      String   @id @default(cuid())
+  // Stable slug for code-side lookup, e.g. "quiz-beginner", "week-warrior".
+  // Used as the natural key in the seed script for idempotency.
+  slug                    String   @unique
+  name                    String
+  description             String
+  // JSON-encoded translations: {"hi": "...", "te": "..."}
+  nameTranslations        String   @default("{}")
+  descriptionTranslations String   @default("{}")
+  // Lucide icon name (e.g. "sparkles", "trophy", "flame", "award").
+  icon                    String
+  // Tailwind gradient classes for the badge tile (e.g. "from-amber-500 to-orange-600").
+  gradient                String
+  // One of: "common" | "uncommon" | "rare" | "epic" | "legendary".
+  rarity                  String   @default("common")
+  // Top-level group: "quiz" | "streak" | "points" | "chat" | "platform".
+  group                   String
+  // Machine-readable criteria type used by the server-side evaluator.
+  // See `src/lib/badges/evaluator.ts` for the full list of supported types.
+  criteriaType            String
+  // Optional numeric threshold (e.g. 7 for week-warrior, 500 for rising-star).
+  criteriaValue           Int?
+  // When false, the badge is hidden from users and the evaluator skips it.
+  // Used to disable chat/community badges until their features ship.
+  active                  Boolean  @default(true)
+  // Optional human-readable hint shown in the badge details dialog.
+  hint                    String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  userBadges    UserBadge[]
+  badgeProgress BadgeProgress[]
+
+  @@index([group])
+  @@index([rarity])
+  @@index([active])
+  @@index([criteriaType])
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  awardedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId]) // prevents duplicate awards
+  @@index([userId])
+  @@index([badgeId])
+}
+
+model BadgeProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  // Current progress value (e.g. 7 for "7 / 30 days").
+  current   Int      @default(0)
+  // Optional target value (e.g. 30 for the 30-day streak badge).
+  // Stored here for fast UI rendering without joining back to Badge.
+  target    Int?
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId]) // one progress row per user per badge
+  @@index([userId])
+  @@index([badgeId])
+}
+
+// ── Daily Quiz Completion lock ──────────────────────────────────────────────
+// A lightweight table that serves as an atomic lock to prevent duplicate
+// daily quiz submissions. When a user submits a daily quiz, we first try
+// to INSERT into this table — if the unique constraint [userId, date]
+// rejects the insert (because a row already exists), we return 409.
+//
+// This closes the TOCTOU race in the old findFirst + create pattern:
+// two concurrent requests could both pass the findFirst check and each
+// create their own QuizAttempt. With this lock, only one can insert.
+//
+// We keep this SEPARATE from QuizAttempt because:
+//   - QuizAttempt allows multiple category attempts per category per user
+//   - The unique constraint should only apply to daily (type, refId) combos
+//   - SQLite doesn't support partial unique indexes via Prisma
+
+model DailyQuizCompletion {
+  id        String   @id @default(cuid())
+  userId    String
+  // IST date in YYYY-MM-DD format — same as QuizAttempt.refId for daily type
+  date      String
+  attemptId String // references the QuizAttempt that this completion locks
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date]) // ATOMIC: only one daily completion per user per IST date
+  @@index([date])
+}
