@@ -955,3 +955,27 @@ Stage Summary:
 - NOTE: DB password was shared in chat; stored only in gitignored .env. Recommend rotating via Supabase dashboard later.
 - RLS is disabled on all Supabase tables (matches old staging project) — fine while app connects via service-level Postgres connection; revisit before exposing Supabase REST API
 - QuizDailySet table empty by design (daily API uses deterministic fallback until admin curates sets)
+
+---
+Task ID: 19
+Agent: Super Z (main)
+Task: Migration gate G7 — wire Supabase Auth (Google + email/password) into the app while keeping NextAuth JWT sessions and full API-route compatibility.
+
+Work Log:
+- Installed @supabase/supabase-js + @supabase/ssr
+- Schema: User.supabaseUserId String? @unique added; User.passwordHash made nullable; db push to Supabase (--accept-data-loss needed only for the false-positive unique-constraint warning on the all-NULL new column)
+- New src/lib/supabase/: server.ts (stateless anon client, returns null when env missing), route-client.ts (@supabase/ssr cookie client, async cookies() for Next 16), bridge-token.ts (2-min HMAC-SHA256 token over {uid,sid,iat,exp}, timingSafeEqual verify), resolve-identity.ts (supabaseUserId match -> email link-and-upgrade legacy users -> create with generated unique username + random gradient + initials)
+- authOptions: credentials provider now Supabase signInWithPassword first (must match linked supabaseUserId; legacy users get linked on first Supabase login), bcrypt fallback for pre-G7 accounts (verified josh login 200 + session); new 'supabase-token' provider verifies bridge token, loads user, refuses suspended
+- /api/register: Supabase-first signUp with user_metadata {username,name}, local-uniqueness precheck, P2002 race handling preserved, emailConfirmationRequired flag, 503 with clear message when Supabase env not set; orphan-identity risk documented (no service-role key by design)
+- /api/auth/supabase-oauth: PKCE start (skipBrowserRedirect, verifier in ssr cookies), provider whitelist (google only for now)
+- /api/auth/supabase-callback: exchangeCodeForSession -> getUser -> resolveIdentity -> suspended check -> createBridgeToken -> redirect /auth/oauth-complete?token=...
+- /auth/oauth-complete: consumes bridge token via signIn('supabase-token'), StrictMode-safe single-shot guard, sync URL-error rendering + async error state (react-hooks/set-state-in-effect compliant)
+- AuthDialog: Google button (redirect flow) + "or" divider, emailConfirmationRequired toast path
+- Config hygiene: upload/ excluded from tsconfig + eslint (extracted zip backup was polluting checks)
+- Verified: tsc clean, lint clean, legacy bcrypt login OK, register 503 message OK, oauth start redirects to not_configured page OK
+- Pushed: 6224a01..b48789a main
+
+Stage Summary:
+- Auth backend is now Supabase Auth (Google + email) with zero changes to the 49 API routes (session shape unchanged)
+- BLOCKED ON USER (dashboard, ~5 min): 1) paste anon key (Settings->API Keys) so NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_ANON_KEY go into .env; 2) Google provider: create Google Cloud OAuth client (Web) with redirect URI https://qqvwagwbskhuekffvggn.supabase.co/auth/v1/callback, paste into Supabase Auth -> Providers -> Google; 3) Auth URL config: Site URL + add app origin redirect URLs (localhost:3000 + preview domain when known); 4) dev convenience: disable Confirm email (or confirmations gate first login)
+- After keys arrive: end-to-end test register->login via Supabase path + Google OAuth in browser; legacy bcrypt path regression-tested already
