@@ -1,17 +1,13 @@
 // Prisma schema for BharatSocial
-// Supports both SQLite (local dev) and PostgreSQL (production).
-// The provider is controlled by the DATABASE_URL environment variable.
-// To switch to PostgreSQL, set DATABASE_URL to a postgresql:// connection string.
+// Provider: postgresql (Supabase, migration gate G6 — see MIGRATION.md).
+// SQLite backup of the pre-migration schema: prisma/schema.sqlite.bak.prisma
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  // Defaults to sqlite for local dev. For production, set DATABASE_URL to a
-  // PostgreSQL connection string and this provider will be inferred automatically.
-  // If you need to explicitly set it, use "postgresql" for production.
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
