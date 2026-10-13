@@ -999,3 +999,24 @@ Stage Summary:
 - Google OAuth: INFRASTRUCTURE FULLY VERIFIED (app -> Supabase -> Google consent with correct client_id/redirect_uri; error paths clean). Final human step: user clicks "Continue with Google" in browser to do real consent + callback.
 - Email auth: BLOCKED on one dashboard toggle — Authentication -> Sign In / Providers -> Email -> "Confirm email" OFF -> Save. After that, re-run scripts/verify-email-auth.mjs (rate limit no longer applies because no email is sent).
 - localhost:3000 redirect URL appears allowlisted (authorize accepted redirect_to=localhost without rejecting).
+
+---
+Task ID: 21
+Agent: Super Z (main)
+Task: Fix two production issues reported by user via screenshots — (A) Google OAuth flow ending at "localhost refused to connect", (B) failed Vercel deployments of G7 commits.
+
+Work Log:
+- Screenshot A: after Google consent the browser was redirected to http://localhost:3000/... (ERR_CONNECTION_REFUSED on user's machine). Root cause: supabase-oauth + supabase-callback routes derived redirect URLs from `new URL(request.url).origin`, which behind a proxy (preview proxy / Vercel) resolves to the internal upstream http://localhost:3000.
+- Screenshot B: Vercel project bharat-social — b48789a (G7) and 44b29c2 (cleanup) both failed ~52s; production stuck on 6224a01 (G6). Reproduced locally with `env -u DATABASE_URL bun run build`: "useSearchParams() should be wrapped in a suspense boundary at page /auth/oauth-complete" — dev mode tolerated it, production prerender did not.
+- Fixes:
+  1. NEW src/lib/origin.ts getPublicOrigin(): proxy-aware origin from x-forwarded-host / x-forwarded-proto with host + request.url fallbacks (localhost gets http://, everything else https://)
+  2. supabase-oauth route: redirect_to + error redirects now use publicOrigin
+  3. supabase-callback route: all /auth/oauth-complete redirects now use publicOrigin
+  4. oauth-complete page: content moved to OAuthCompleteContent, wrapped in <Suspense fallback={OAuthCompleteFallback}> — build now passes
+- Verified: tsc clean, eslint clean, full production build passes (35/35 static pages), dev server still OK; localhost sanity check keeps redirect_to=localhost (correct direct-access behavior)
+- Pushed 44b29c2..c55779c (also carried 8b1801f platform commit) -> Vercel auto-deploy of c55779c
+
+Stage Summary:
+- BLOCKED ON USER for Vercel go-live: add env vars in Vercel (DATABASE_URL pooler URL, NEXTAUTH_SECRET, NEXTAUTH_URL=<vercel domain>, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY) then Redeploy — NEXT_PUBLIC_* are build-time inlined so they must exist before the build
+- BLOCKED ON USER for OAuth on Vercel: Supabase Authentication -> URL Configuration -> add https://<vercel-domain>/api/auth/supabase-callback to Redirect URLs and set Site URL to the Vercel domain; keep localhost entry for dev. Google Cloud side needs NO change (its redirect URI is Supabase's /auth/v1/callback, hosting-agnostic)
+- Email confirm toggle still unknown; if email signup still fails, turn Confirm email off (Authentication -> Sign In / Providers -> Email)
