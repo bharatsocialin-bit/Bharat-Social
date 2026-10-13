@@ -13,6 +13,14 @@
  * are on direct localhost dev access and can fall back to request.url.
  */
 export function getPublicOrigin(request: Request): string {
+  // Explicit override — needed in environments where the proxy forwards to
+  // the app without any x-forwarded-* headers (e.g. preview proxies), which
+  // would otherwise make every redirect land on http://localhost:3000.
+  // Set PUBLIC_ORIGIN in the container's .env (NOT on Vercel — there the
+  // forwarded headers are always present and correct).
+  const override = process.env.PUBLIC_ORIGIN?.trim();
+  if (override) return override.replace(/\/+$/, '');
+
   const forwardedHost = request.headers.get('x-forwarded-host');
   const host = (forwardedHost ?? request.headers.get('host'))?.split(',')[0]?.trim();
 
