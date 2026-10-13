@@ -979,3 +979,23 @@ Stage Summary:
 - Auth backend is now Supabase Auth (Google + email) with zero changes to the 49 API routes (session shape unchanged)
 - BLOCKED ON USER (dashboard, ~5 min): 1) paste anon key (Settings->API Keys) so NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_ANON_KEY go into .env; 2) Google provider: create Google Cloud OAuth client (Web) with redirect URI https://qqvwagwbskhuekffvggn.supabase.co/auth/v1/callback, paste into Supabase Auth -> Providers -> Google; 3) Auth URL config: Site URL + add app origin redirect URLs (localhost:3000 + preview domain when known); 4) dev convenience: disable Confirm email (or confirmations gate first login)
 - After keys arrive: end-to-end test register->login via Supabase path + Google OAuth in browser; legacy bcrypt path regression-tested already
+
+---
+Task ID: 20
+Agent: Super Z (main)
+Task: Post-dashboard-config end-to-end verification of Supabase Auth (Google OAuth + email) after user completed Google Cloud + Supabase provider setup.
+
+Work Log:
+- Dev server confirmed running (200) via prior (nohup env -u DATABASE_URL bun run dev &) session
+- Google OAuth start /api/auth/supabase-oauth?provider=google -> 307 to Supabase /auth/v1/authorize with PKCE challenge + redirect_to localhost callback
+- Direct check of Supabase authorize with a freshly generated valid 43-char S256 code_challenge -> 302 to accounts.google.com with REAL client_id 17600129044-e3m9iuuh8a67p1l0spoj3r3bl3qk2gl3.apps.googleusercontent.com and redirect_uri https://qqvwagwbskhuekffvggn.supabase.co/auth/v1/callback => Google provider fully configured on Supabase side
+- Earlier 400 from authorize was a test artifact (truncated code_challenge from printed Location header); not a real issue
+- OAuth callback error paths verified: ?error=access_denied -> /auth/oauth-complete?error=oauth_provider_error; ?code=bogus -> ?error=code_exchange_failed (both 307, clean UX)
+- Email signup test (fresh verify.z.* user) -> 502 with server log "Supabase signUp error: email rate limit exceeded" => over_email_send_rate_limit fires ONLY when an email send is attempted => strong evidence "Confirm email" toggle is STILL ON in Supabase dashboard (free tier ~2 emails/hour, burned by testing)
+- Email login for priya.sharma.in@gmail.com could not be retested: registration password was used inline in an earlier session and is not recoverable; rate limit blocks creating a new known-password user
+- Verification scripts persisted: scripts/verify-auth.mjs (oauth start + email login), scripts/verify-email-auth.mjs (register fresh user + login)
+
+Stage Summary:
+- Google OAuth: INFRASTRUCTURE FULLY VERIFIED (app -> Supabase -> Google consent with correct client_id/redirect_uri; error paths clean). Final human step: user clicks "Continue with Google" in browser to do real consent + callback.
+- Email auth: BLOCKED on one dashboard toggle — Authentication -> Sign In / Providers -> Email -> "Confirm email" OFF -> Save. After that, re-run scripts/verify-email-auth.mjs (rate limit no longer applies because no email is sent).
+- localhost:3000 redirect URL appears allowlisted (authorize accepted redirect_to=localhost without rejecting).
