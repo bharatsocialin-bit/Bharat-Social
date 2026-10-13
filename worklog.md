@@ -909,3 +909,21 @@ Stage Summary:
 - Project fully restored and running in workspace from the zip snapshot.
 - Outstanding from Phase 1 audit: L10 rate limiting on auth endpoints, L9 CSP headers, M5 notification type union, M8 trending extraction, L4 dependency bloat. Supabase Postgres migration planned per MIGRATION.md / .env.example (gate G6).
 - Awaiting GitHub repo link from user to connect git + possibly restore db/custom.db and any newer commits beyond this zip.
+
+---
+Task ID: 17
+Agent: Super Z (main)
+Task: Connect workspace to GitHub repo (bharatsocialin-bit/Bharat-Social) and push project.
+
+Work Log:
+- Verified remote repo was empty (fresh clone test) — safe to push existing history
+- Added remote origin https://github.com/bharatsocialin-bit/Bharat-Social.git
+- SECURITY: found .env (with NEXTAUTH_SECRET) accidentally auto-committed in HEAD. Removed via git rm --cached, rotated NEXTAUTH_SECRET (new value in local .env only), amended commit BEFORE any push — secret never left the machine.
+- Configured credential.helper store (~/.git-credentials, chmod 600) with user-provided PAT
+- Pushed main → origin/main successfully. HEAD = 0e77218 "BharatSocial: full platform import..." (224 tracked files)
+
+Stage Summary:
+- GitHub repo now mirrors workspace: full source + prisma schema + seed scripts + docs.
+- .env, db/*.db, public/uploads, node_modules correctly excluded via .gitignore.
+- Future pushes work via stored credentials (no re-auth needed).
+- NOTE: user pasted PAT into chat — recommend revoking/rotating it once sync workflow is stable, or letting user know it remains visible in chat history.
