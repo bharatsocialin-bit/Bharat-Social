@@ -1020,3 +1020,21 @@ Stage Summary:
 - BLOCKED ON USER for Vercel go-live: add env vars in Vercel (DATABASE_URL pooler URL, NEXTAUTH_SECRET, NEXTAUTH_URL=<vercel domain>, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY) then Redeploy — NEXT_PUBLIC_* are build-time inlined so they must exist before the build
 - BLOCKED ON USER for OAuth on Vercel: Supabase Authentication -> URL Configuration -> add https://<vercel-domain>/api/auth/supabase-callback to Redirect URLs and set Site URL to the Vercel domain; keep localhost entry for dev. Google Cloud side needs NO change (its redirect URI is Supabase's /auth/v1/callback, hosting-agnostic)
 - Email confirm toggle still unknown; if email signup still fails, turn Confirm email off (Authentication -> Sign In / Providers -> Email)
+
+---
+Task ID: 22
+Agent: Super Z (main)
+Task: Verify live Vercel deployment (bharat-social-mu.vercel.app) end-to-end after user added env vars and redeployed.
+
+Work Log:
+- User's real Vercel domain: https://bharat-social-mu.vercel.app (Hobby plan)
+- Vercel production: Ready on c55779c ("Fix Vercel build failure + OAuth localhost redirect bug") — build fix confirmed on Vercel
+- Live checks: home 200; /api/auth/supabase-oauth?provider=google -> 307 with redirect_to=https://bharat-social-mu.vercel.app/api/auth/supabase-callback (proxy-aware origin fix works on Vercel; NEXT_PUBLIC_* vars baked in correctly)
+- Followed chain with that exact redirect_to + valid PKCE challenge: Supabase /auth/v1/authorize -> 302 accounts.google.com with correct client_id => Vercel domain IS allowlisted in Supabase URL Configuration
+- Production login test (scripts/verify-vercel-prod.mjs): CSRF 200 -> credentials POST 200 with session cookie -> session user josh@bharatsocial.test -> /api/quiz/categories 200 with 11 categories => Vercel <-> Supabase Postgres <-> NextAuth all working in production
+
+Stage Summary:
+- PRODUCTION FULLY OPERATIONAL: build, DB, email/bcrypt login, and the entire Google OAuth redirect chain verified programmatically
+- Remaining human step: user completes real Google consent in browser (only part impossible to test headlessly)
+- Cosmetic: Google Cloud has literal placeholder "your-app.vercel.app" in JS origins + an unnecessary second redirect URI row (delete or fix; harmless but confusing)
+- Confirm NEXTAUTH_URL env value equals the real domain; Vercel auto-detects VERCEL_URL so current flows work regardless
