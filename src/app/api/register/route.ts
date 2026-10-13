@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { hashPassword } from '@/lib/password';
+import { getSupabaseAuthClient, supabaseConfig } from '@/lib/supabase/server';
+
+/**
+ * Registration (migration gate G7): Supabase Auth owns credentials.
+ *
+ * Flow: validate → local-uniqueness precheck → Supabase signUp → local
+ * User row linked via supabaseUserId (passwordHash = null).
+ *
+ * Response contract (unchanged from the legacy route):
+ *   201 { user: { id, email, username, name } }
+ *   400/409 { error }
+ * plus optional flag: emailConfirmationRequired=true when the project has
+ * "Confirm email" enabled in Supabase (the caller must verify before login).
+ */
 
 export async function POST(request: Request) {
   try {
@@ -46,9 +59,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if email or username already exists
     const cleanEmail = email.trim().toLowerCase();
     const cleanUsername = username.trim().toLowerCase();
+
+    const supabase = getSupabaseAuthClient();
+    if (!supabase || !supabaseConfig()) {
+      return NextResponse.json(
+        {
+          error:
+            'Supabase Auth is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.',
+        },
+        { status: 503 },
+      );
+    }
+
+    // Local uniqueness precheck — fast, friendly 409s before hitting Supabase.
     const existingEmail = await db.user.findUnique({ where: { email: cleanEmail } });
     if (existingEmail) {
       return NextResponse.json(
@@ -65,8 +90,41 @@ export async function POST(request: Request) {
       );
     }
 
-    // Hash the password and create the user
-    const passwordHash = await hashPassword(password);
+    // ── Create the Supabase Auth identity ──
+    // username/name ride along in user_metadata so OAuth-linking and
+    // future flows can read them without touching the DB.
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password,
+      options: {
+        data: { username: cleanUsername, name: name || cleanUsername },
+      },
+    });
+
+    if (signUpError || !signUpData.user) {
+      const msg = signUpError?.message || '';
+      // The identity already exists in Supabase but not locally (e.g. a
+      // previous partially-failed signup). Surface as a conflict.
+      if (/already|exists|registered/i.test(msg)) {
+        return NextResponse.json(
+          { error: 'An account with this email already exists.' },
+          { status: 409 },
+        );
+      }
+      if (/password/i.test(msg) && /short|weak|length/i.test(msg)) {
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+      console.error('Supabase signUp error:', signUpError?.message);
+      return NextResponse.json(
+        { error: 'Registration failed. Please try again.' },
+        { status: 502 },
+      );
+    }
+
+    const supabaseUserId = signUpData.user.id;
+    const emailConfirmed =
+      !!signUpData.session || // confirmation disabled → auto signed-in
+      (signUpData.user.email_confirmed_at != null && signUpData.user.email_confirmed_at !== '');
 
     // Generate initials from the name or username
     const displayName = name || cleanUsername;
@@ -82,7 +140,8 @@ export async function POST(request: Request) {
         data: {
           email: cleanEmail,
           username: cleanUsername,
-          passwordHash,
+          passwordHash: null, // Supabase owns the credential from here on
+          supabaseUserId,
           name: name || cleanUsername,
           initials,
           avatarGradient: 'from-sky-500 to-indigo-500',
@@ -95,7 +154,13 @@ export async function POST(request: Request) {
         },
       });
 
-      return NextResponse.json({ user }, { status: 201 });
+      return NextResponse.json(
+        {
+          user,
+          emailConfirmationRequired: !emailConfirmed,
+        },
+        { status: 201 },
+      );
     } catch (err) {
       // Handle the TOCTOU race: two concurrent register requests with the same
       // email or username can both pass the findUnique check above. The
@@ -120,7 +185,16 @@ export async function POST(request: Request) {
           { status: 409 },
         );
       }
-      throw err; // Re-throw to be caught by the outer try/catch → 500.
+      // NOTE: the Supabase identity already exists at this point but has no
+      // local profile (orphan). Deleting it requires the service-role key,
+      // which this app intentionally does not hold. The user can simply
+      // register again with the same email once the local conflict is gone;
+      // resolveIdentity() links by email on next sign-in.
+      console.error('Local user create error after Supabase signUp:', err);
+      return NextResponse.json(
+        { error: 'An error occurred during registration.' },
+        { status: 500 },
+      );
     }
   } catch (error) {
     console.error('Registration error:', error);

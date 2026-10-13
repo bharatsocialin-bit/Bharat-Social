@@ -14,20 +14,25 @@ datasource db {
 // ── Users & Auth ───────────────────────────────────────────────────────────
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  username       String   @unique
-  passwordHash   String
-  name           String?
-  bio            String?
-  avatarGradient String   @default("from-sky-500 to-indigo-500")
-  initials       String   @default("Ne")
-  state          String?
-  city           String?
-  role           String   @default("user") // "user" | "admin"
-  suspended      Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(cuid())
+  email           String   @unique
+  username        String   @unique
+  // Nullable since migration gate G7 (Supabase Auth): Google/Supabase-managed
+  // users authenticate via Supabase and have no local bcrypt hash.
+  // Legacy pre-migration users keep their bcrypt hash and can still log in.
+  passwordHash    String?
+  // Supabase auth.users.id — links the local profile row to the Supabase Auth identity.
+  supabaseUserId  String?  @unique
+  name            String?
+  bio             String?
+  avatarGradient  String   @default("from-sky-500 to-indigo-500")
+  initials        String   @default("Ne")
+  state           String?
+  city            String?
+  role            String   @default("user") // "user" | "admin"
+  suspended       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
   posts                  Post[]

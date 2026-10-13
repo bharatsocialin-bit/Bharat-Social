@@ -2,6 +2,8 @@ import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { db } from '@/lib/db';
 import { verifyPassword } from '@/lib/password';
+import { getSupabaseAuthClient } from '@/lib/supabase/server';
+import { verifyBridgeToken } from '@/lib/supabase/bridge-token';
 
 /**
  * Resolve the NextAuth JWT secret. CRITICAL: do NOT fall back to a hardcoded
@@ -43,7 +45,12 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
   },
   providers: [
+    // ── Email + password ────────────────────────────────────────────────
+    // G7: password verification is delegated to Supabase Auth. Legacy
+    // pre-G7 users (local bcrypt hash, no supabaseUserId) are still
+    // verified locally so nothing breaks before accounts are migrated.
     CredentialsProvider({
+      id: 'credentials',
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -58,19 +65,39 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
 
-        if (!user || !user.passwordHash) {
-          return null;
+        if (!user) return null;
+        if (user.suspended) return null;
+
+        // ── Path A: Supabase-managed user (or linked legacy user) ──
+        if (user.supabaseUserId || !user.passwordHash) {
+          const supabase = getSupabaseAuthClient();
+          if (!supabase) return null; // Supabase not configured — cannot verify
+
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: credentials.email,
+            password: credentials.password,
+          });
+          if (error || !data.user) return null;
+
+          // Supabase identity must match the linked row (or link it now
+          // for legacy users signing in through Supabase for the first
+          // time with the password they originally registered with).
+          if (user.supabaseUserId && data.user.id !== user.supabaseUserId) {
+            return null;
+          }
+          if (!user.supabaseUserId) {
+            await db.user.update({
+              where: { id: user.id },
+              data: { supabaseUserId: data.user.id },
+            });
+          }
+
+          return { id: user.id, email: user.email, name: user.name || user.username, image: null };
         }
 
-        // Reject suspended users at login time
-        if (user.suspended) {
-          return null;
-        }
-
+        // ── Path B: legacy local bcrypt user ──
         const isValid = await verifyPassword(credentials.password, user.passwordHash);
-        if (!isValid) {
-          return null;
-        }
+        if (!isValid) return null;
 
         return {
           id: user.id,
@@ -78,6 +105,33 @@ export const authOptions: NextAuthOptions = {
           name: user.name || user.username,
           image: null,
         };
+      },
+    }),
+
+    // ── Supabase OAuth bridge (Google etc.) ─────────────────────────────
+    // Consumes the short-lived HMAC bridge token minted by
+    // /api/auth/supabase-callback after the Supabase code exchange. The
+    // local User row ALREADY exists at this point (created by the
+    // callback), so this provider only verifies and loads.
+    CredentialsProvider({
+      id: 'supabase-token',
+      name: 'Supabase OAuth',
+      credentials: {
+        token: { label: 'Bridge Token', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.token) return null;
+
+        const payload = verifyBridgeToken(credentials.token);
+        if (!payload) return null;
+
+        const user = await db.user.findUnique({ where: { id: payload.uid } });
+        if (!user) return null;
+        if (user.suspended) return null;
+        // Token must reference the identity it was minted for.
+        if (user.supabaseUserId && user.supabaseUserId !== payload.sid) return null;
+
+        return { id: user.id, email: user.email, name: user.name || user.username, image: null };
       },
     }),
   ],
