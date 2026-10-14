@@ -97,7 +97,7 @@ interface SocialState {
   pulseCityId: string;
   setPulseCityId: (cityId: string) => void;
 
-  // Top-level tab inside India Pulse: city reports / cross-region stories / about.
+  // Top-level tab inside India Pulse: trending / user-stories / community / about.
   pulseTab: PulseTab;
   setPulseTab: (tab: PulseTab) => void;
 
@@ -105,6 +105,22 @@ interface SocialState {
   viewedTopicId: string | null;
   openTopic: (topicId: string) => void;
   closeTopic: () => void;
+
+  // ── India Pulse: User Stories viewer state ────────────────────────────
+  // When non-null, the full-screen StoryViewer is open. The viewer reads
+  // its own groups list but uses this state to know WHICH author's group
+  // to play first and at which story index.
+  storyViewerState: { authorId: string; startIndex: number } | null;
+  openStoryViewer: (authorId: string, startIndex?: number) => void;
+  closeStoryViewer: () => void;
+
+  // Whether the full-screen StoryCreator dialog is open.
+  storyCreatorOpen: boolean;
+  setStoryCreatorOpen: (open: boolean) => void;
+
+  // Whether the creator's StoryArchive view is open.
+  storyArchiveOpen: boolean;
+  setStoryArchiveOpen: (open: boolean) => void;
 
   // ── Shorts — vertical video feed ───────────────────────────────────────
   shorts: VideoPost[];
@@ -346,6 +362,18 @@ export const useSocialStore = create<SocialState>((set, get) => ({
   viewedTopicId: null,
   openTopic: (topicId) => set({ viewedTopicId: topicId }),
   closeTopic: () => set({ viewedTopicId: null }),
+
+  // ── India Pulse: User Stories viewer state ────────────────────────────
+  storyViewerState: null,
+  openStoryViewer: (authorId, startIndex = 0) =>
+    set({ storyViewerState: { authorId, startIndex } }),
+  closeStoryViewer: () => set({ storyViewerState: null }),
+
+  storyCreatorOpen: false,
+  setStoryCreatorOpen: (open) => set({ storyCreatorOpen: open }),
+
+  storyArchiveOpen: false,
+  setStoryArchiveOpen: (open) => set({ storyArchiveOpen: open }),
 
   // ── Shorts ─────────────────────────────────────────────────────────────
   shorts: DEMO_SHORTS,

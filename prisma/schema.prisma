@@ -76,6 +76,9 @@ model User {
   moderationActions      ModerationAction[] @relation("moderationAdmin")
   quizQuestionsCreated   QuizQuestion[]     @relation("quizQuestionCreator")
   quizDailySetsCreated   QuizDailySet[]     @relation("quizDailySetCreator")
+  // ── India Pulse: User Stories ──
+  userStories            UserStory[]
+  userStoryViews         UserStoryView[]
 
   @@index([username])
   @@index([email])
@@ -282,6 +285,81 @@ model PulseStory {
   @@index([status])
   @@index([region])
   @@index([createdAt])
+}
+
+// ── User Stories (India Pulse — Instagram-style 24h stories) ───────────────
+//
+// DESIGN:
+//   - Live stories: expiresAt > now AND archivedAt IS NULL.
+//   - Soft archive: a cron / on-read sweep sets archivedAt when expiresAt
+//     passes; the row stays in the DB so the creator can browse their own
+//     archive for 7 days after expiry (archivedAt + 7 days).
+//   - Story kinds:
+//       "text"  — colored-background text story (textContent required)
+//       "photo" — image upload (mediaUrl required, textContent optional caption)
+//       "video" — vertical video upload (mediaUrl required, 5-15s, textContent
+//                 optional caption)
+//       "link"  — URL with auto-fetched OpenGraph preview (linkUrl required,
+//                 linkPreview JSON holds {title, description, image, url})
+//
+// Storage: photo/video media lives in the `user-stories` Supabase Storage
+// bucket under `<owner-id>/<story-id>-<kind>.<ext>` (RLS-scoped to owner,
+// same pattern as avatars).
+
+model UserStory {
+  id              String   @id @default(cuid())
+  authorId        String
+  kind            String   // "text" | "photo" | "video" | "link"
+  // For "text": the story text (1-200 chars). For "photo"/"video": optional
+  // caption (also 1-200). For "link": optional author note about the link.
+  textContent     String?
+  // Public Supabase Storage URL for photo/video media. Null for "text"/"link".
+  mediaUrl        String?
+  // Bucket-relative object path (for orphan cleanup on delete). Null for
+  // text/link stories.
+  mediaObjectPath String?
+  // For "link" stories: the URL the user shared.
+  linkUrl         String?
+  // For "link" stories: JSON-encoded OpenGraph preview
+  //   { title, description, image, url, siteName }
+  linkPreview     Json?
+  // For "text" stories: visual style.
+  backgroundColor String   @default("saffron") // palette key, see STORY_BG_PALETTE
+  textColor       String   @default("white")   // "white" | "black"
+  // Live window.
+  expiresAt       DateTime // createdAt + 24h, set at insert time
+  // Soft archive: null while live, set when archived (by sweep or by user
+  // deleting the story early). Once set, the story is hidden from public
+  // feeds but remains in the DB for the creator's 7-day archive window.
+  archivedAt      DateTime?
+  // Soft delete: set when the creator explicitly deletes their story.
+  // Archived stories auto-delete (deletedAt = archivedAt + 7d) via sweep.
+  deletedAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  author User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  views UserStoryView[]
+
+  @@index([authorId])
+  @@index([expiresAt])
+  @@index([archivedAt])
+  @@index([deletedAt])
+  @@index([kind])
+}
+
+model UserStoryView {
+  id        String   @id @default(cuid())
+  storyId   String
+  viewerId  String
+  createdAt DateTime @default(now())
+
+  story  UserStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  viewer User      @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, viewerId]) // one view per viewer per story
+  @@index([storyId])
+  @@index([viewerId])
 }
 
 // ── Shorts — short-form vertical video ────────────────────────────────────

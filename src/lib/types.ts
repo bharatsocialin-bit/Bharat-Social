@@ -172,7 +172,7 @@ export interface VideoPost {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** India Pulse top-level tabs. */
-export type PulseTab = 'city' | 'stories' | 'about';
+export type PulseTab = 'city' | 'user-stories' | 'community' | 'about';
 
 /**
  * Community Signal — the transparent verification status of a city report.

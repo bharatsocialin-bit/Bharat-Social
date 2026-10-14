@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Activity, MapPin, Layers, Info, TrendingUp, Loader2, ShieldCheck,
-  Users, FileText, ChevronRight,
+  Users, FileText, ChevronRight, Newspaper,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSocialStore } from '@/store/useSocialStore';
@@ -11,13 +11,18 @@ import { PULSE_CITIES } from '@/data/pulse-cities';
 import { PostCard } from '@/components/social/PostCard';
 import { EmptyState } from '@/components/social/EmptyState';
 import { ReportStatusBadge } from './ReportStatusBadge';
+import { UserStoriesBar } from './user-stories/UserStoriesBar';
+import { StoryCreator } from './user-stories/StoryCreator';
+import { StoryViewer } from './user-stories/StoryViewer';
+import { StoryArchive } from './user-stories/StoryArchive';
 import type { PulseTab, DemoPost } from '@/lib/types';
 import { formatCount } from '@/lib/format';
 import { useAuth } from '@/hooks/use-auth';
 
 const TABS: { key: PulseTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { key: 'city', label: 'Trending', icon: TrendingUp },
-  { key: 'stories', label: 'Stories', icon: Layers },
+  { key: 'user-stories', label: 'Stories', icon: Layers },
+  { key: 'community', label: 'Community', icon: Newspaper },
   { key: 'about', label: 'About', icon: Info },
 ];
 
@@ -62,9 +67,19 @@ export function IndiaPulseView() {
       <PulseHeader pulseTab={pulseTab} setPulseTab={setPulseTab} />
       <div className="flex-1">
         {pulseTab === 'city' && <TrendingTab />}
-        {pulseTab === 'stories' && <StoriesTab />}
+        {pulseTab === 'user-stories' && (
+          <>
+            <UserStoriesBar />
+            <UserStoriesPanel />
+          </>
+        )}
+        {pulseTab === 'community' && <StoriesTab />}
         {pulseTab === 'about' && <PulseAboutPanel />}
       </div>
+      {/* Story modals — mounted once, visibility driven by store. */}
+      <StoryViewer />
+      <StoryCreator />
+      <StoryArchive />
     </div>
   );
 }
@@ -223,7 +238,55 @@ function TrendingTab() {
   );
 }
 
-// ── Stories Tab ──────────────────────────────────────────────────────────────
+// ── User Stories Tab body (below the rail) ──────────────────────────────────
+
+function UserStoriesPanel() {
+  const { isAuthenticated } = useAuth();
+  const setStoryCreatorOpen = useSocialStore((s) => s.setStoryCreatorOpen);
+
+  return (
+    <div className="space-y-4 p-4">
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-white">
+          <Layers className="h-4 w-4 text-saffron" />
+          How User Stories work
+        </h2>
+        <ul className="mt-3 space-y-2 text-xs text-white/70">
+          <li className="flex gap-2">
+            <span className="text-saffron">•</span>
+            <span>Post a text, photo, video, or link story — it stays live for 24 hours.</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="text-saffron">•</span>
+            <span>Stories are public — anyone visiting India Pulse can view them.</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="text-saffron">•</span>
+            <span>After 24h your story moves to your private archive, viewable for 7 days.</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="text-saffron">•</span>
+            <span>You can delete your story at any time — it disappears immediately.</span>
+          </li>
+        </ul>
+        {isAuthenticated ? (
+          <button
+            onClick={() => setStoryCreatorOpen(true)}
+            className="mt-3 w-full rounded-xl bg-saffron px-4 py-2 text-sm font-semibold text-white hover:bg-saffron/90"
+          >
+            Post a story
+          </button>
+        ) : (
+          <p className="mt-3 rounded-xl bg-saffron/10 px-3 py-2 text-xs text-saffron/80">
+            Sign in to post your own story.
+          </p>
+        )}
+      </section>
+    </div>
+  );
+}
+
+// ── Stories Tab (Community Updates — admin-curated) ─────────────────────────
 
 function StoriesTab() {
   const [stories, setStories] = useState<StoryItem[]>([]);

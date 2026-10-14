@@ -350,7 +350,7 @@ export function HomePage() {
           subtitle="Topics across regions and languages"
           onSeeAll={() => {
             setActiveNav('pulse');
-            useSocialStore.getState().setPulseTab('stories');
+            useSocialStore.getState().setPulseTab('community');
           }}
         />
         <div className="grid gap-2 sm:grid-cols-2">
@@ -360,7 +360,7 @@ export function HomePage() {
               type="button"
               onClick={() => {
                 setActiveNav('pulse');
-                useSocialStore.getState().setPulseTab('stories');
+                useSocialStore.getState().setPulseTab('community');
                 useSocialStore.getState().openTopic(topic.id);
               }}
               className="rounded-xl border border-border bg-card p-3 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-soft-md hover:border-saffron/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron"
