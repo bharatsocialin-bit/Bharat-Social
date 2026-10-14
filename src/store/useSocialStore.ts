@@ -35,6 +35,12 @@ interface SocialState {
   openProfile: (userId: string) => void;
   closeProfile: () => void;
 
+  // Full-screen "Edit profile" view (own profile only — feature: complete
+  // profile system). Rendered above all other views while open.
+  editProfileOpen: boolean;
+  openEditProfile: () => void;
+  closeEditProfile: () => void;
+
   // ── Posts ────────────────────────────────────────────────────────────────
   posts: DemoPost[];
   addPost: (content: string, language: Language) => void;
@@ -193,6 +199,10 @@ export const useSocialStore = create<SocialState>((set, get) => ({
   viewedProfileUserId: null,
   openProfile: (userId) => set({ viewedProfileUserId: userId }),
   closeProfile: () => set({ viewedProfileUserId: null }),
+
+  editProfileOpen: false,
+  openEditProfile: () => set({ editProfileOpen: true, viewedProfileUserId: null }),
+  closeEditProfile: () => set({ editProfileOpen: false }),
 
   posts: DEMO_POSTS,
   addPost: (content, language) => {

@@ -1,8 +1,14 @@
+'use client';
+
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { DemoUser } from '@/lib/types';
 
 interface UserAvatarProps {
-  user: Pick<DemoUser, 'initials' | 'avatarGradient' | 'name'>;
+  user: Pick<DemoUser, 'initials' | 'avatarGradient' | 'name'> & {
+    /** Persistent profile photo (Supabase Storage). Wins over gradient. */
+    avatarUrl?: string | null;
+  };
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
@@ -15,12 +21,40 @@ const SIZE_CLASSES: Record<NonNullable<UserAvatarProps['size']>, string> = {
 };
 
 /**
- * Renders a deterministic gradient avatar with the user's initials.
+ * Renders the user's avatar.
  *
- * We use gradients instead of images so the prototype stays self-contained
- * and never depends on a remote image service.
+ * When a persistent profile photo exists (Supabase Storage URL), the image
+ * is shown; if it fails to load we fall back to the generated gradient +
+ * initials avatar so the UI never breaks.
  */
 export function UserAvatar({ user, size = 'md', className }: UserAvatarProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = !!user.avatarUrl && !imageFailed;
+
+  if (showImage) {
+    return (
+      <div
+        role="img"
+        aria-label={user.name}
+        className={cn(
+          'relative inline-flex shrink-0 overflow-hidden rounded-full shadow-sm ring-2 ring-white',
+          SIZE_CLASSES[size],
+          className,
+        )}
+      >
+        {/* Remote Supabase Storage asset; next/image adds no value for
+            arbitrary user uploads and requires host allowlisting. */}
+        <img
+          src={user.avatarUrl as string}
+          alt={user.name}
+          className="h-full w-full object-cover"
+          onError={() => setImageFailed(true)}
+          referrerPolicy="no-referrer"
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       aria-label={user.name}
