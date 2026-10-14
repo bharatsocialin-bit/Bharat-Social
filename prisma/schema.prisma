@@ -29,6 +29,22 @@ model User {
   initials        String   @default("Ne")
   state           String?
   city            String?
+  // ── Profile setup & editing (feature: complete profile system) ──
+  // Persistent Supabase Storage public URL of the uploaded profile photo.
+  // Null = render the generated gradient avatar (avatarGradient + initials).
+  avatarUrl       String?
+  // Optional. Collected for the platform minimum-age policy (13+), validated
+  // server-side in src/lib/profile.ts. Never returned by public profile APIs.
+  dateOfBirth     DateTime?
+  // Optional. Must be one of the allowlisted values in src/lib/profile.ts.
+  gender          String?
+  // JSON-encoded array of profile links: [{ "url": "https://…", "label": "…" }]
+  // — maximum 4 entries, validated server-side. JSON-in-string follows the
+  // existing schema convention (Short.hashtags, QuizAttempt.answers, …).
+  links           String   @default("[]")
+  // Set when the user completes first-time onboarding. Null = the
+  // "Complete your profile" screen is required (username choice mandatory).
+  onboardedAt     DateTime?
   role            String   @default("user") // "user" | "admin"
   suspended       Boolean  @default(false)
   createdAt       DateTime @default(now())

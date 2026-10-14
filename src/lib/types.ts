@@ -31,6 +31,11 @@ export interface DemoUser {
   initials: string;
   /** Tailwind gradient classes for the avatar background, e.g. "from-rose-400 to-orange-400". */
   avatarGradient: string;
+  /**
+   * Persistent profile photo URL (Supabase Storage). When present the avatar
+   * renders the image; otherwise it falls back to gradient + initials.
+   */
+  avatarUrl?: string | null;
   bio: string;
   location?: string;
   verified?: boolean;
@@ -38,6 +43,32 @@ export interface DemoUser {
   following: number;
   /** Whether the current demo viewer follows this user. */
   isFollowing?: boolean;
+}
+
+/** A single profile link (up to 4 per user). Validated in src/lib/profile.ts. */
+export interface ProfileLink {
+  url: string;
+  label?: string;
+}
+
+/** Shape returned by the profile APIs for the logged-in user's own data. */
+export interface OwnProfile {
+  id: string;
+  email: string;
+  username: string;
+  name: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  avatarGradient: string;
+  initials: string;
+  state: string | null;
+  city: string | null;
+  gender: string | null;
+  dateOfBirth: string | null; // "YYYY-MM-DD" | null
+  links: ProfileLink[];
+  onboardingRequired: boolean;
+  role: string;
+  createdAt: string;
 }
 
 export interface DemoReply {
