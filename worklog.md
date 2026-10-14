@@ -87,3 +87,19 @@ Stage Summary:
 - Profile feature pushed to origin/main (commits bb2d5fc..5d28c04 + fix d1379ef) but NOT live on Vercel yet.
 - Production still serving 310efe8 and healthy. No outage, no data risk.
 - NEXT: user to paste Vercel build log error from https://vercel.com/bharat-social/bharat-social/ALzRyMjnakmcMaTfgCk33qgM4Vog
+
+---
+Task ID: 28 (conclusion)
+Agent: Super Z (main)
+Task: Resolve Vercel deploy failure and confirm profile feature live.
+
+Work Log:
+- User pasted real Vercel build log: TS error "avatarUrl does not exist in type UserSelect" at src/app/api/posts/[id]/comments/route.ts:61.
+- ROOT CAUSE: Vercel reuses cached node_modules; @prisma/client postinstall skipped on cache hit -> generated Prisma client predated the new profile schema fields. (Earlier "instant failure" read from GitHub status timestamps was misleading; gitlink fix d1379ef was hygiene, not the root cause.)
+- FIX: commit 28803b7 — build script now "prisma generate && next build && ..." (standard Prisma-on-Vercel pattern). Verified locally (Generated Prisma Client v6.19.2 + compiled successfully) then pushed.
+- Deploy LIVE: /api/profile/check-username 200 on production.
+- Production smoke: home 200, quiz 200 (DB), profile 401 anon (gate), avatar POST 401 anon, check-username 200, /api/users/josh 200 (public builder), posts 200. Zero regressions.
+
+Stage Summary:
+- Profile Setup + Editing feature (Tasks 26-27) is DEPLOYED and LIVE at https://bharat-social-mu.vercel.app.
+- Remaining user actions: Confirm-email toggle OFF in Supabase; optional SUPABASE_SERVICE_ROLE_KEY in Vercel env; verify Site URL = production domain; rotate DB password + PATs (multiple secrets have passed through chat).
