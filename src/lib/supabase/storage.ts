@@ -18,7 +18,7 @@ import { supabaseConfig } from './server';
  *   Path 2: Supabase session in cookies (Google OAuth users — the PKCE
  *     bridge leaves sb-* cookies behind). The cookie-aware client acts AS
  *     the user; Storage RLS policies (see scripts/profile-migration.sql)
- *     restrict writes to avatars/<auth.uid>/….
+ *     restrict writes to <auth.uid>/… (bucket-relative).
  *
  *   Path 3: Supabase access token stashed in the NextAuth JWT (email
  *     users, saved at sign-in by the credentials provider). A user-bound
@@ -81,11 +81,20 @@ export function getUserTokenClientIfNeeded(accessToken: string): SupabaseClient 
 
 // ── URL / path helpers ─────────────────────────────────────────────────────
 
-/** Public URL for an object path like "avatars/<uid>/avatar-123.jpg". */
+/**
+ * Public URL for a BUCKET-RELATIVE object path like "<uid>/avatar-123.jpg".
+ * The bucket segment is added here — storage.from(AVATAR_BUCKET) calls take
+ * bucket-relative keys, so the same string must never be reused verbatim
+ * after /object/public/ (that would double-prefix and 404).
+ */
 export function publicUrlFor(objectPath: string): string | null {
   const config = supabaseConfig();
   if (!config) return null;
-  return `${config.url}/storage/v1/object/public/${objectPath}`;
+  if (objectPath.startsWith(`${AVATAR_BUCKET}/`)) {
+    // Defensive: tolerate legacy pre-prefixed paths instead of 404-ing them.
+    objectPath = objectPath.slice(AVATAR_BUCKET.length + 1);
+  }
+  return `${config.url}/storage/v1/object/public/${AVATAR_BUCKET}/${objectPath}`;
 }
 
 /**
@@ -99,9 +108,11 @@ export function objectPathFromPublicUrl(avatarUrl: string | null | undefined): s
   const marker = '/storage/v1/object/public/';
   const idx = avatarUrl.indexOf(marker);
   if (idx === -1) return null;
-  const path = avatarUrl.slice(idx + marker.length).split('?')[0];
-  if (!path.startsWith(`${AVATAR_BUCKET}/`)) return null;
-  return path;
+  const raw = avatarUrl.slice(idx + marker.length).split('?')[0];
+  if (!raw.startsWith(`${AVATAR_BUCKET}/`)) return null;
+  // Return the BUCKET-RELATIVE key (strip the bucket segment) — callers pass
+  // it straight to .from(AVATAR_BUCKET).remove(), which expects no prefix.
+  return raw.slice(AVATAR_BUCKET.length + 1);
 }
 
 // ── Bucket bootstrap (service-key path only) ───────────────────────────────
@@ -164,7 +175,7 @@ export function detectImageMime(buffer: Buffer): AllowedImageMime | null {
 export interface StoredAvatar {
   /** Full persistent public URL to store on the user row. */
   publicUrl: string;
-  /** Bucket-relative object path, e.g. "avatars/<uid>/avatar-…jpg". */
+  /** Bucket-relative object path, e.g. "<uid>/avatar-…jpg". */
   objectPath: string;
 }
 
@@ -184,7 +195,9 @@ export async function uploadAvatarObject(
 
   const ext = EXTENSION_BY_MIME[mime];
   const suffix = Math.random().toString(36).slice(2, 8);
-  const objectPath = `${AVATAR_BUCKET}/${folderOwnerId}/avatar-${Date.now()}-${suffix}.${ext}`;
+  // Bucket-relative key: .from(AVATAR_BUCKET).upload() must NOT receive an
+  // "avatars/…" prefixed path (that would nest a second avatars/ folder).
+  const objectPath = `${folderOwnerId}/avatar-${Date.now()}-${suffix}.${ext}`;
 
   if (admin) {
     const { error } = await admin.storage.from(AVATAR_BUCKET).upload(objectPath, buffer, {
@@ -212,7 +225,8 @@ export async function uploadAvatarObjectAsUser(
 ): Promise<StoredAvatar> {
   const ext = EXTENSION_BY_MIME[mime];
   const suffix = Math.random().toString(36).slice(2, 8);
-  const objectPath = `${AVATAR_BUCKET}/${folderOwnerId}/avatar-${Date.now()}-${suffix}.${ext}`;
+  // Bucket-relative key (see uploadAvatarObject).
+  const objectPath = `${folderOwnerId}/avatar-${Date.now()}-${suffix}.${ext}`;
 
   const { error } = await client.storage.from(AVATAR_BUCKET).upload(objectPath, buffer, {
     contentType: mime,
