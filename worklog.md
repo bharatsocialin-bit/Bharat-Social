@@ -67,3 +67,23 @@ Work Log:
 Stage Summary:
 - Feature VERIFIED end-to-end against the live Supabase project: schema, APIs, validation, authz, onboarding gate, storage policies all green (57/57 E2E + 7/7 RLS + 41/41 unit + tsc/eslint/build clean).
 - User actions remaining: (1) turn OFF Supabase "Confirm email" (still ON — blocks email signups via rate limit); (2) optionally add SUPABASE_SERVICE_ROLE_KEY to Vercel env for guaranteed avatar uploads on all paths; (3) provide GitHub PAT to push main → auto-deploy; (4) verify Supabase Site URL = https://bharat-social-mu.vercel.app (from earlier task).
+
+---
+Task ID: 28
+Agent: Super Z (main)
+Task: Push profile feature with user-provided GitHub PAT; diagnose Vercel deploy failure.
+
+Work Log:
+- New PAT stored in ~/.git-credentials (chmod 600); verified via GitHub API: scope repo, login bharatsocialin-bit.
+- Pushed 8 commits 310efe8..5d28c04 (profile feature) to main. Vercel auto-deploy FAILED (dpl_9MbspC77..., status "Deployment has failed").
+- Production UNAFFECTED: previous deploy (310efe8) still serving; home 200, /api/quiz/categories 200 throughout.
+- Failure analysis: deployment created_at == failure status timestamp (same second) -> instant failure at clone/pre-build stage, NOT a compile error.
+- Reproduction attempts (all PASSED locally): bun run build in working tree; fresh git clone + fresh bun install (839 pkgs) + build; bun install --frozen-lockfile --dry-run (lockfile in sync). No module-scope env throws in new code.
+- Found + fixed: platform auto-commit d0598e4 had recorded audit-clone as a GITLINK (mode 160000) with no .gitmodules — Vercel fails on submodule entries without .gitmodules. Commit d1379ef: git rm --cached audit-clone + gitignore. Pushed. Deploy dpl_ALzRyMj... ALSO failed instantly -> gitlink was not the (only) cause.
+- Full diff 310efe8..d1379ef reviewed: 34 files, all profile-feature or trivial config (eslint ignore, tsconfig exclude, .gitignore). No vercel.json, no package.json/lockfile changes.
+- Stuck point: real Vercel build logs required. Needs user to open deploy URL and paste error, or provide Vercel token for `vercel inspect --logs`.
+
+Stage Summary:
+- Profile feature pushed to origin/main (commits bb2d5fc..5d28c04 + fix d1379ef) but NOT live on Vercel yet.
+- Production still serving 310efe8 and healthy. No outage, no data risk.
+- NEXT: user to paste Vercel build log error from https://vercel.com/bharat-social/bharat-social/ALzRyMjnakmcMaTfgCk33qgM4Vog
