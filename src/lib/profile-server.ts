@@ -73,33 +73,6 @@ export async function buildPublicProfile(
     };
   }
 
-  const postsCount = await db.post.count({
-    where: { authorId: user.id, deletedAt: null },
-  });
-
-  let isFollowing = false;
-  let isBlocked = false;
-  let blockedBy = false;
-
-  if (viewer.id && viewer.id !== user.id) {
-    const follow = await db.follow.findUnique({
-      where: {
-        followerId_followingId: { followerId: viewer.id, followingId: user.id },
-      },
-    });
-    isFollowing = !!follow;
-
-    const block = await db.block.findUnique({
-      where: { blockerId_blockedId: { blockerId: viewer.id, blockedId: user.id } },
-    });
-    isBlocked = !!block;
-
-    const reverseBlock = await db.block.findUnique({
-      where: { blockerId_blockedId: { blockerId: user.id, blockedId: viewer.id } },
-    });
-    blockedBy = !!reverseBlock;
-  }
-
   type PostRow = {
     id: string;
     content: string;
@@ -110,21 +83,59 @@ export async function buildPublicProfile(
     bookmarks: Array<{ id: string }>;
   };
 
-  let posts: PostRow[] = [];
-  if (!blockedBy) {
-    posts = (await db.post.findMany({
-      where: { authorId: user.id, deletedAt: null },
-      include: {
-        likes: { select: { userId: true } },
-        comments: true,
-        bookmarks: viewer.id
-          ? { where: { userId: viewer.id }, select: { id: true } }
-          : { where: { id: '__never__' }, select: { id: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    })) as PostRow[];
-  }
+  // ── Parallel fan-out ──
+  // The DB lives in ap-south-1 while Vercel functions default to us-east-1,
+  // so EVERY query pays a cross-region round trip. These queries are
+  // independent (they only need `user`), so run them concurrently instead
+  // of sequentially — this is the profile page's main latency fix.
+  const isOtherViewer = !!viewer.id && viewer.id !== user.id;
+  const viewerId = viewer.id;
+
+  const [postsCount, followRow, blockRow, reverseBlockRow, postRows] = await Promise.all([
+    db.post.count({ where: { authorId: user.id, deletedAt: null } }),
+    isOtherViewer
+      ? db.follow.findUnique({
+          where: {
+            followerId_followingId: { followerId: viewerId as string, followingId: user.id },
+          },
+        })
+      : Promise.resolve(null),
+    isOtherViewer
+      ? db.block.findUnique({
+          where: {
+            blockerId_blockedId: { blockerId: viewerId as string, blockedId: user.id },
+          },
+        })
+      : Promise.resolve(null),
+    isOtherViewer
+      ? db.block.findUnique({
+          where: {
+            blockerId_blockedId: { blockerId: user.id, blockedId: viewerId as string },
+          },
+        })
+      : Promise.resolve(null),
+    // Fetched unconditionally in parallel; discarded below if the target
+    // blocked the viewer (the extra query only happens in that rare case).
+    db.post
+      .findMany({
+        where: { authorId: user.id, deletedAt: null },
+        include: {
+          likes: { select: { userId: true } },
+          comments: true,
+          bookmarks: viewerId
+            ? { where: { userId: viewerId }, select: { id: true } }
+            : { where: { id: '__never__' }, select: { id: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      })
+      .then((rows) => rows as unknown as PostRow[]),
+  ]);
+
+  const isFollowing = !!followRow;
+  const isBlocked = !!blockRow;
+  const blockedBy = !!reverseBlockRow;
+  const posts: PostRow[] = blockedBy ? [] : postRows;
 
   return {
     user: {

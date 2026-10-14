@@ -60,33 +60,38 @@ export function LeftSidebar({ onCompose }: LeftSidebarProps) {
   const { isAuthenticated, user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Check if current user is admin
+  // Load the signed-in user's real profile into the shared store (name,
+  // @username, avatar photo, role). One fetch serves the sidebar, composer,
+  // reply panel, mobile nav and home page; cleared on sign-out.
+  const currentProfileUser = useSocialStore((s) => s.currentProfileUser);
+  const loadCurrentProfile = useSocialStore((s) => s.loadCurrentProfile);
+  const clearCurrentProfile = useSocialStore((s) => s.clearCurrentProfile);
+
   useEffect(() => {
-    if (!isAuthenticated) return;
-    let cancelled = false;
-    fetch('/api/profile')
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => {
-        if (!cancelled) {
-          setIsAdmin(d?.user?.role === 'admin');
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setIsAdmin(false);
-      });
-    return () => { cancelled = true; };
-  }, [isAuthenticated]);
+    if (!isAuthenticated) {
+      clearCurrentProfile();
+      return;
+    }
+    void loadCurrentProfile();
+  }, [isAuthenticated, loadCurrentProfile, clearCurrentProfile]);
+
+  // Admin nav item appears only for role === 'admin'.
+  const isAdmin = currentProfileUser?.role === 'admin';
 
   // Build nav items — add Admin only if user is admin
   const navItems = isAdmin
     ? [...NAV_ITEMS, { key: 'admin' as NavKey, label: 'Admin', icon: ShieldCheck }]
     : NAV_ITEMS;
 
-  // Use the demo user for avatar display if not authenticated
+  // Real profile overrides once loaded; demo fallback while loading / anon.
   const currentUser = isAuthenticated && user
-    ? { ...demoUser, name: user.name || 'User', handle: (user.email?.split('@')[0] || 'user') }
+    ? {
+        ...demoUser,
+        name: currentProfileUser?.name || user.name || 'User',
+        handle: currentProfileUser?.username || (user.email?.split('@')[0] || 'user'),
+        avatarUrl: currentProfileUser?.avatarUrl ?? null,
+      }
     : demoUser;
 
   function handleComposeClick() {

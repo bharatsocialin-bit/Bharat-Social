@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useSocialStore } from '@/store/useSocialStore';
 import { validateUsername, USERNAME_REGEX } from '@/lib/profile';
 import type { OwnProfile } from '@/lib/types';
 import {
@@ -37,6 +38,9 @@ type Availability = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 export function OnboardingView({ profile, onComplete }: OnboardingViewProps) {
   const { toast } = useToast();
+  // Refresh the shared shell profile right after onboarding completes so
+  // the sidebar / composer show the new @username and photo immediately.
+  const loadCurrentProfile = useSocialStore((s) => s.loadCurrentProfile);
 
   const [username, setUsername] = useState(profile.username);
   const [name, setName] = useState(profile.name ?? '');
@@ -143,6 +147,7 @@ export function OnboardingView({ profile, onComplete }: OnboardingViewProps) {
         title: 'Welcome to BharatSocial! 🇮🇳',
         description: 'Your profile is ready. You can update it anytime from your profile page.',
       });
+      void loadCurrentProfile();
       onComplete();
     } catch {
       setSaveError('Network error — please check your connection and try again.');

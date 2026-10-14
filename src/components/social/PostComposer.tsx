@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useSocialStore } from '@/store/useSocialStore';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { CURRENT_USER_ID, DEMO_USER_MAP } from '@/data/users';
+import { useAvatarUser } from '@/hooks/use-avatar-user';
 import { UserAvatar } from './UserAvatar';
 import type { Language } from '@/lib/types';
 import { languageLabel } from '@/lib/format';
@@ -114,7 +114,8 @@ export const PostComposer = forwardRef<PostComposerHandle, PostComposerProps>(
       }
     }
 
-    const currentUser = DEMO_USER_MAP[CURRENT_USER_ID];
+    // Real profile (name/@username/photo) once loaded; demo fallback before.
+    const currentUser = useAvatarUser();
 
     return (
       <div

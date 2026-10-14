@@ -38,6 +38,7 @@ export function EditProfileView() {
   const { toast } = useToast();
   const closeEditProfile = useSocialStore((s) => s.closeEditProfile);
   const openProfile = useSocialStore((s) => s.openProfile);
+  const loadCurrentProfile = useSocialStore((s) => s.loadCurrentProfile);
   const { user: authUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
@@ -194,6 +195,8 @@ export function EditProfileView() {
       }
 
       toast({ title: 'Profile saved', description: 'Your changes are live.' });
+      // Refresh the shared shell profile (sidebar / composer / mobile nav).
+      void loadCurrentProfile();
       // Back to the (now refreshed) profile page.
       closeEditProfile();
       openProfile(authUser?.id ?? 'u-current');

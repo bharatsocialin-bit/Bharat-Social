@@ -4,7 +4,8 @@ import { Home, Activity, Film, Compass, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { NavKey } from '@/lib/types';
 import { useSocialStore } from '@/store/useSocialStore';
-import { CURRENT_USER_ID, DEMO_USER_MAP } from '@/data/users';
+import { CURRENT_USER_ID } from '@/data/users';
+import { useAvatarUser } from '@/hooks/use-avatar-user';
 import { UserAvatar } from './UserAvatar';
 
 interface MobileNavProps {
@@ -23,7 +24,7 @@ export function MobileNav({ onCompose }: MobileNavProps) {
   const activeNav = useSocialStore((s) => s.activeNav);
   const setActiveNav = useSocialStore((s) => s.setActiveNav);
   const openProfile = useSocialStore((s) => s.openProfile);
-  const currentUser = DEMO_USER_MAP[CURRENT_USER_ID];
+  const currentUser = useAvatarUser();
 
   return (
     <nav

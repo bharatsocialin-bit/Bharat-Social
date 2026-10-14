@@ -9,6 +9,7 @@ import { GENDER_OPTIONS, INDIAN_STATES, BIO_MAX } from '@/lib/profile';
 import type { ProfileLink } from '@/lib/types';
 import { LinksEditor, createLinksEditorValue, type LinksEditorValue } from './LinksEditor';
 import { AvatarPicker } from './AvatarPicker';
+import { useSocialStore } from '@/store/useSocialStore';
 
 /**
  * Shared optional-field block used by BOTH the onboarding screen and the
@@ -58,6 +59,9 @@ export function ProfileOptionalFields({
   const [linksValue, setLinksValue] = useState<LinksEditorValue>(() =>
     createLinksEditorValue(form.links),
   );
+  // Keep the app shell (sidebar / composer / mobile nav) in sync the moment
+  // a new profile photo lands.
+  const loadCurrentProfile = useSocialStore((s) => s.loadCurrentProfile);
 
   function handleLinksChange(next: LinksEditorValue) {
     setLinksValue(next);
@@ -74,7 +78,10 @@ export function ProfileOptionalFields({
           fallbackName={name || 'Your profile'}
           fallbackInitials={initials}
           fallbackGradient={avatarGradient}
-          onAvatarChanged={(url) => setField('avatarUrl', url)}
+          onAvatarChanged={(url) => {
+            setField('avatarUrl', url);
+            void loadCurrentProfile();
+          }}
           size="lg"
         />
       </div>

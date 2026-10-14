@@ -22,6 +22,23 @@ import { DEMO_SHORTS } from '@/data/shorts';
 import { getQuestionsForCategory, QUIZ_QUESTION_MAP } from '@/data/quiz-questions';
 import { getTodayChallenge } from '@/data/quiz-meta';
 
+/**
+ * Shape of the signed-in user's own profile as returned by GET /api/profile
+ * (`{ user: ... }`). Only fields the shell UI needs are declared; the store
+ * keeps whatever the API returned.
+ */
+export interface CurrentProfileUser {
+  id: string;
+  username: string;
+  name: string;
+  avatarUrl?: string | null;
+  avatarGradient?: string | null;
+  initials?: string | null;
+  bio?: string | null;
+  state?: string | null;
+  role?: string;
+}
+
 interface SocialState {
   // ── Navigation / view state ────────────────────────────────────────────
   activeNav: NavKey;
@@ -40,6 +57,16 @@ interface SocialState {
   editProfileOpen: boolean;
   openEditProfile: () => void;
   closeEditProfile: () => void;
+
+  // ── Current user's REAL profile (feature: complete profile system) ─────
+  // Loaded once per session from GET /api/profile and refreshed after
+  // profile edits / avatar changes, so the sidebar, composer, reply panel
+  // and mobile nav all show the real name, @username and profile photo
+  // instead of the demo placeholder.
+  currentProfileUser: CurrentProfileUser | null;
+  currentProfileStatus: 'idle' | 'loading' | 'ready' | 'error';
+  loadCurrentProfile: () => Promise<void>;
+  clearCurrentProfile: () => void;
 
   // ── Posts ────────────────────────────────────────────────────────────────
   posts: DemoPost[];
@@ -203,6 +230,24 @@ export const useSocialStore = create<SocialState>((set, get) => ({
   editProfileOpen: false,
   openEditProfile: () => set({ editProfileOpen: true, viewedProfileUserId: null }),
   closeEditProfile: () => set({ editProfileOpen: false }),
+
+  // ── Current user's real profile ─────────────────────────────────────────────
+  currentProfileUser: null,
+  currentProfileStatus: 'idle',
+  loadCurrentProfile: async () => {
+    if (get().currentProfileStatus === 'loading') return;
+    set({ currentProfileStatus: 'loading' });
+    try {
+      const res = await fetch('/api/profile');
+      if (!res.ok) throw new Error(`profile fetch ${res.status}`);
+      const data = (await res.json()) as { user?: CurrentProfileUser };
+      set({ currentProfileUser: data?.user ?? null, currentProfileStatus: 'ready' });
+    } catch {
+      set({ currentProfileStatus: 'error' });
+    }
+  },
+  clearCurrentProfile: () =>
+    set({ currentProfileUser: null, currentProfileStatus: 'idle' }),
 
   posts: DEMO_POSTS,
   addPost: (content, language) => {

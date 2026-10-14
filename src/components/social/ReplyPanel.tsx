@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { CURRENT_USER_ID, DEMO_USER_MAP } from '@/data/users';
+import { useAvatarUser } from '@/hooks/use-avatar-user';
 import { UserAvatar } from './UserAvatar';
 import { languageLabel } from '@/lib/format';
 import { TimeAgo } from './TimeAgo';
@@ -33,7 +34,7 @@ interface ReplyPanelProps {
 export function ReplyPanel({ postId, replies, onSubmit, onCancel }: ReplyPanelProps) {
   const [content, setContent] = useState('');
   const [language, setLanguage] = useState<Language>('en');
-  const currentUser = DEMO_USER_MAP[CURRENT_USER_ID];
+  const currentUser = useAvatarUser();
 
   const canSubmit = content.trim().length > 0;
 

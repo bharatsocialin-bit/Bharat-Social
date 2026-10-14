@@ -28,6 +28,7 @@ import { formatCount, languageLabel } from '@/lib/format';
 import { UserAvatar } from '@/components/social/UserAvatar';
 import { PostCard } from '@/components/social/PostCard';
 import { LogoFull } from '@/components/social/Logo';
+import { useAvatarUser } from '@/hooks/use-avatar-user';
 import { ReportStatusBadge } from '@/components/social/pulse/ReportStatusBadge';
 import { useToast } from '@/hooks/use-toast';
 import type { Language, NavKey } from '@/lib/types';
@@ -45,6 +46,7 @@ export function HomePage() {
   const pulseCityId = useSocialStore((s) => s.pulseCityId);
   const preferredContentLanguages = useSocialStore((s) => s.preferredContentLanguages);
   const togglePreferredContentLanguage = useSocialStore((s) => s.togglePreferredContentLanguage);
+  const avatarUser = useAvatarUser();
   const { toast } = useToast();
 
   const recentPosts = useMemo(() => posts.slice(0, 4), [posts]);
@@ -115,7 +117,7 @@ export function HomePage() {
             className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron"
             aria-label="Open your profile"
           >
-            <UserAvatar user={DEMO_USER_MAP[CURRENT_USER_ID]} size="md" />
+            <UserAvatar user={avatarUser} size="md" />
           </button>
           <div className="min-w-0 flex-1">
             <button
