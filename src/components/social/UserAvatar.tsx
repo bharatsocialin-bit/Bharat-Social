@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { DemoUser } from '@/lib/types';
 
@@ -29,6 +29,14 @@ const SIZE_CLASSES: Record<NonNullable<UserAvatarProps['size']>, string> = {
  */
 export function UserAvatar({ user, size = 'md', className }: UserAvatarProps) {
   const [imageFailed, setImageFailed] = useState(false);
+
+  // A load failure is only meaningful for the URL that failed. When the
+  // user uploads a new photo (or the profile is refetched), give the new
+  // URL a fresh chance instead of being stuck on the gradient fallback.
+  useEffect(() => {
+    setImageFailed(false);
+  }, [user.avatarUrl]);
+
   const showImage = !!user.avatarUrl && !imageFailed;
 
   if (showImage) {
