@@ -92,7 +92,19 @@ export const authOptions: NextAuthOptions = {
             });
           }
 
-          return { id: user.id, email: user.email, name: user.name || user.username, image: null };
+          // Stash the Supabase session tokens in the NextAuth JWT so
+          // server routes (e.g. avatar storage) can act as this user with
+          // Storage RLS applied. The tokens live ONLY in the signed,
+          // httpOnly JWT cookie — the session callback below never copies
+          // them into the client-visible session object.
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name || user.username,
+            image: null,
+            sbAccessToken: data.session?.access_token ?? null,
+            sbRefreshToken: data.session?.refresh_token ?? null,
+          };
         }
 
         // ── Path B: legacy local bcrypt user ──
@@ -139,6 +151,15 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // Persist the Supabase tokens issued at sign-in (email path). OAuth
+        // users instead carry their Supabase session in sb-* cookies, so
+        // nothing needs stashing for them here.
+        const sbat = (user as { sbAccessToken?: unknown }).sbAccessToken;
+        const sbrt = (user as { sbRefreshToken?: unknown }).sbRefreshToken;
+        if (typeof sbat === 'string' && typeof sbrt === 'string') {
+          token.sbAccessToken = sbat;
+          token.sbRefreshToken = sbrt;
+        }
       }
       return token;
     },

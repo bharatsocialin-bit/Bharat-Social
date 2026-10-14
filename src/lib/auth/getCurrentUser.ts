@@ -30,6 +30,13 @@ export async function getCurrentUser() {
       role: true,
       suspended: true,
       createdAt: true,
+      // ── Profile setup & editing feature ──
+      avatarUrl: true,
+      gender: true,
+      dateOfBirth: true,
+      links: true,
+      onboardedAt: true,
+      supabaseUserId: true,
     },
   });
 
