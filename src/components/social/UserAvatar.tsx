@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { DemoUser } from '@/lib/types';
 
@@ -28,18 +28,15 @@ const SIZE_CLASSES: Record<NonNullable<UserAvatarProps['size']>, string> = {
  * initials avatar so the UI never breaks.
  */
 export function UserAvatar({ user, size = 'md', className }: UserAvatarProps) {
-  const [imageFailed, setImageFailed] = useState(false);
+  // Track WHICH URL failed instead of a boolean — a load failure only
+  // disqualifies that exact URL. When a new photo is uploaded (or the
+  // profile is refetched), the new URL gets a fresh chance automatically:
+  // no stuck gradient fallback, and no effect needed.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const avatarUrl = typeof user.avatarUrl === 'string' ? user.avatarUrl : null;
+  const showImage = !!avatarUrl && failedUrl !== avatarUrl;
 
-  // A load failure is only meaningful for the URL that failed. When the
-  // user uploads a new photo (or the profile is refetched), give the new
-  // URL a fresh chance instead of being stuck on the gradient fallback.
-  useEffect(() => {
-    setImageFailed(false);
-  }, [user.avatarUrl]);
-
-  const showImage = !!user.avatarUrl && !imageFailed;
-
-  if (showImage) {
+  if (showImage && avatarUrl) {
     return (
       <div
         role="img"
@@ -53,10 +50,10 @@ export function UserAvatar({ user, size = 'md', className }: UserAvatarProps) {
         {/* Remote Supabase Storage asset; next/image adds no value for
             arbitrary user uploads and requires host allowlisting. */}
         <img
-          src={user.avatarUrl as string}
+          src={avatarUrl}
           alt={user.name}
           className="h-full w-full object-cover"
-          onError={() => setImageFailed(true)}
+          onError={() => setFailedUrl(avatarUrl)}
           referrerPolicy="no-referrer"
         />
       </div>
