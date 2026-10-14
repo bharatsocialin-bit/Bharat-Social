@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSupabaseAuthClient, supabaseConfig } from '@/lib/supabase/server';
+import { validateUsername } from '@/lib/profile';
 
 /**
  * Registration (migration gate G7): Supabase Auth owns credentials.
@@ -43,12 +44,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate username format (alphanumeric + underscore, 3-30 chars)
-    if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
-      return NextResponse.json(
-        { error: 'Username must be 3-30 characters, using only letters, numbers, and underscores.' },
-        { status: 400 },
-      );
+    // Validate username format + reserved words (shared rules with the
+    // profile-edit PATCH route — src/lib/profile.ts is the single source).
+    const usernameCheck = validateUsername(username);
+    if (!usernameCheck.ok) {
+      return NextResponse.json({ error: usernameCheck.error }, { status: 400 });
     }
 
     // Validate name length if provided
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const cleanUsername = username.trim().toLowerCase();
+    const cleanUsername = usernameCheck.value; // already trimmed + lowercased
 
     const supabase = getSupabaseAuthClient();
     if (!supabase || !supabaseConfig()) {
@@ -145,6 +145,9 @@ export async function POST(request: Request) {
           name: name || cleanUsername,
           initials,
           avatarGradient: 'from-sky-500 to-indigo-500',
+          // Email registrants chose their username during signup — they have
+          // completed onboarding and go straight to the feed.
+          onboardedAt: new Date(),
         },
         select: {
           id: true,

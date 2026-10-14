@@ -58,6 +58,7 @@ export async function POST(
             username: true,
             avatarGradient: true,
             initials: true,
+            avatarUrl: true,
           },
         },
       },
@@ -99,6 +100,7 @@ export async function POST(
           handle: comment.user.username,
           initials: comment.user.initials,
           avatarGradient: comment.user.avatarGradient,
+          avatarUrl: comment.user.avatarUrl,
         },
       },
     }, { status: 201 });
