@@ -46,3 +46,24 @@ Work Log:
 Stage Summary:
 - Branch feature/profile-system, 5 commits: bb2d5fc, 4fd86e0, 616e97a, 9450911, 09ec019. NOT pushed (PAT wiped) — needs user PAT; do NOT merge to main until user approves (push to main = production deploy).
 - ACTIVATION for the user: (1) run scripts/profile-migration.sql in Supabase SQL editor (or bunx prisma db push with DATABASE_URL); (2) add SUPABASE_SERVICE_ROLE_KEY to Vercel + local .env for guaranteed avatar storage (or run the SQL policies and use cookie/token paths); (3) restore local .env (anon key + DATABASE_URL) to dev-test in sandbox; (4) provide PAT to push branch → Vercel preview.
+
+---
+Task ID: 27
+Agent: Super Z (main)
+Task: Activate + verify the profile setup & editing system (Task 26 feature) with the user-provided Supabase credentials.
+
+Work Log:
+- Restored .env: NEXT_PUBLIC_SUPABASE_ANON_KEY + DATABASE_URL (pooler, pgbouncer) + NEXTAUTH_URL (local) appended; secrets NOT printed/committed. Container shell DATABASE_URL (file:) must always be unset (env -u) for Prisma to use .env.
+- READ-ONLY inspection of live DB confirmed the Task 26 migration is ALREADY APPLIED (user ran scripts/profile-migration.sql): 5 new User columns present, avatars bucket (public, 5MB, image mimes) present, all 4 owner-scoped policies present, 3 existing users backfilled onboarded=true (existing users skip onboarding per spec).
+- Code review of the whole feature (Task 26 commits): validation lib, 3-path storage layer, whitelisted PATCH + TOCTOU guard, check-username, authOptions sb-token stash, register onboardedAt, profile-server shared builder — all coherent; getCurrentUser includes supabaseUserId/avatarUrl/onboardedAt as the avatar route requires.
+- Verification: tsc clean, eslint clean, 41/41 unit tests, next build OK (35 routes).
+- NEW scripts/inspect-profile-db.mjs — read-only DB inspection (columns/buckets/policies/users).
+- NEW scripts/verify-profile-e2e.mjs — 57-assertion live E2E (57/57 PASS): anon 401s; register (live path blocked by Confirm-email rate limit → local-bcrypt fallback identity, cleaned up after); credentials login Path B (csrf cookie is URL-encoded — decode before split('|')); onboarding gate flip; bio/state/gender/DOB save+persist; links 0-4 add/reorder/remove + ftp/javascript/5-entry rejections; DOB age 13-120 + future/over-120 rejections; bio 200 cap; username rename/409 clash/reserved/short/chars; whitelist security (role/email/suspended/passwordHash untouchable); public profile privacy (no email/DOB/gender); avatar 415 + legacy-session 503 setupRequired + DELETE 404; persistence; quiz/posts regression.
+- NEW scripts/verify-storage-rls-sql.mjs — SQL-level RLS proof (7/7): as `authenticated` role with synthetic JWT claims: own-folder insert allowed; cross-user insert RLS-denied; all 3 owner policies verified folder-scoped to (auth.uid())::text; public read policy; Supabase guard trigger protect_objects_delete blocks ALL SQL deletes (Storage API only — extra defense in depth).
+- Test-identity notes: Supabase rejects .test TLD + subdomain emails at signUp; gmail-format works but Confirm-email ON + free-tier limit (2/h) → 502 (GoTrue refused BEFORE creating anything; app correctly surfaces 502). SQL-inserted auth rows break GoTrue sign-in ("Database error querying schema") — do not hand-insert auth.users. josh is a LEGACY bcrypt user with no Supabase auth row (Path B).
+- Cleanup: all test rows deleted from public "User" + auth.users (pattern profile-e2e-*); 2 RLS probe metadata rows remain in storage.objects (no file bytes ever uploaded, public URL 404s, invisible; SQL delete guard-blocked — optional dashboard cleanup).
+- Branch state: 7 commits on local main ahead of origin (feature work + worklog). NOT pushed (no PAT). Pushing main = production deploy (user decision).
+
+Stage Summary:
+- Feature VERIFIED end-to-end against the live Supabase project: schema, APIs, validation, authz, onboarding gate, storage policies all green (57/57 E2E + 7/7 RLS + 41/41 unit + tsc/eslint/build clean).
+- User actions remaining: (1) turn OFF Supabase "Confirm email" (still ON — blocks email signups via rate limit); (2) optionally add SUPABASE_SERVICE_ROLE_KEY to Vercel env for guaranteed avatar uploads on all paths; (3) provide GitHub PAT to push main → auto-deploy; (4) verify Supabase Site URL = https://bharat-social-mu.vercel.app (from earlier task).
