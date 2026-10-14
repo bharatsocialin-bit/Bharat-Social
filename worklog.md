@@ -103,3 +103,21 @@ Work Log:
 Stage Summary:
 - Profile Setup + Editing feature (Tasks 26-27) is DEPLOYED and LIVE at https://bharat-social-mu.vercel.app.
 - Remaining user actions: Confirm-email toggle OFF in Supabase; optional SUPABASE_SERVICE_ROLE_KEY in Vercel env; verify Site URL = production domain; rotate DB password + PATs (multiple secrets have passed through chat).
+
+---
+Task ID: 29
+Agent: Super Z (main)
+Task: Fix avatar upload showing gradient instead of the photo (production bug report + screenshot).
+
+Work Log:
+- Screenshot: Edit profile showed "Photo updated" toast but avatar still rendered the CC gradient fallback.
+- Read-only DB check: user crosscraftedin HAS avatarUrl saved (public URL under /object/public/avatars/...) — upload + DB write worked; rendering broken.
+- Storage API probe: URL returned 409-wrapper {"statusCode":"404","message":"Object not found","code":"NoSuchKey"}.
+- Direct SQL (read-only): bucket avatars exists (public, 5MB, image mimes); the object EXISTS but its key is "avatars/<uid>/avatar-…jpg" — the bucket segment was included INSIDE the key. RLS policies expect folder[1]=auth.uid() i.e. UNPREFIXED keys; the write succeeded only because the service-role admin path bypassed RLS (user evidently added SUPABASE_SERVICE_ROLE_KEY to Vercel).
+- ROOT CAUSE: path convention conflict inside src/lib/supabase/storage.ts — builders produced "avatars/<uid>/file", upload() used it as a bucket-relative key (double prefix in physical key), while publicUrlFor()/objectPathFromPublicUrl() treated the same string as "bucket/key" → URLs pointed one level above the real object.
+- FIX (commit 2ecc6b3): bucket-relative keys everywhere — path builders emit "<uid>/file"; publicUrlFor() prepends the bucket (with defensive legacy-input tolerance); objectPathFromPublicUrl() strips the bucket segment (also makes replace/remove cleanup + user-JWT RLS paths correct). Route code needed no change (uses helper outputs only).
+- Verified: tsc clean, 41/41 unit tests, eslint clean; pushed; Vercel deploy "success".
+- Leftover: one 18KB orphan object at key "avatars/<uid>/avatar-1791952059890-czbvqd.jpg" (pre-fix upload). Unreachable by the app; user can delete via Supabase dashboard Storage UI. Pre-fix DB avatarUrl for crosscraftedin points at a non-existent key → user must re-upload once; new uploads land at the correct key.
+
+Stage Summary:
+- Avatar storage path bug fixed and deployed (2ecc6b3). User needs to re-upload their photo once; all future uploads/replaces/removals work on every auth path.
