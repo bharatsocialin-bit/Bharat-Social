@@ -121,3 +121,19 @@ Work Log:
 
 Stage Summary:
 - Avatar storage path bug fixed and deployed (2ecc6b3). User needs to re-upload their photo once; all future uploads/replaces/removals work on every auth path.
+
+---
+Task ID: 30
+Agent: Super Z (main)
+Task: Avatar still showing gradient after re-upload (Task 29 follow-up).
+
+Work Log:
+- Verified storage + DB post-fix: NEW object at correct bucket-relative key (cad1943c-.../avatar-1791952993534-dem56d.jpg), DB avatarUrl matches, URL serves 200 image/jpeg 374x374. Storage layer fully correct.
+- Root cause of remaining symptom: UserAvatar kept imageFailed=true after the OLD url failed; when the new valid URL arrived the component still rendered the gradient (stuck state across avatarUrl changes). Explains screenshot: toast success + gradient persisting.
+- Fix 4946775: reset imageFailed on avatarUrl change via useEffect. eslint reported react-hooks/set-state-in-effect ERROR (chained shell missed it before push — process lesson: hard-stop on lint failures).
+- Fix fc8fc5a (final): track failedUrl (which URL failed) instead of boolean; showImage = !!avatarUrl && failedUrl !== avatarUrl; onError={() => setFailedUrl(avatarUrl)}. No effect, lint-clean, self-healing by construction.
+- Verified: tsc clean, eslint clean, 41/41 unit tests. Deploys: 4946775 and fc8fc5a both "success". Prod sanity: home 200, avatar URL 200.
+
+Stage Summary:
+- Avatar pipeline fully working: upload -> correct key -> correct URL -> render. UI self-heals on replacement. User should hard-refresh to see the photo immediately.
+- Process note: never chain eslint after ';' — treat lint errors as blockers before push.
