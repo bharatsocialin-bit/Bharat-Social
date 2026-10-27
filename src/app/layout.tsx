@@ -82,8 +82,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/desily-logo.png",
-        width: 1254,
-        height: 1254,
+        width: 2172,
+        height: 724,
         alt: "Desily — One India. Every Voice.",
       },
     ],

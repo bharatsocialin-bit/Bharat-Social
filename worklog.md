@@ -220,3 +220,31 @@ Stage Summary:
 - User's actual Desily logo now installed across the app: LogoMark (mobile header, collapsed sidebar), LogoFull (desktop sidebar, hero), LogoSquare (auth dialogs, onboarding), favicon (browser tab), apple-touch-icon (iOS home screen), PWA manifest icons, OG/Twitter card image. All placeholder SVGs removed.
 - To replace the logo later: drop a new PNG at upload/Desily One India Every Voice Logo.png and re-run `node scripts/install-desily-logo.mjs`.
 - Dashboard reference image documented for future UI work — NOT implemented in this commit.
+
+---
+Task ID: 34
+Agent: Super Z (main)
+Task: Replace previous Desily logo with user's NEW wide-landscape logo (fixes white-box-on-dark-sidebar issue from Task 33).
+
+Work Log:
+- CONTEXT: User reported the previous logo (Task 33) was rendering with visible white background blocks on dark sidebar/homepage (screenshot 2026-10-27-09-59-45.png with two blue circles highlighting the issue). User uploaded a NEW replacement logo: upload/Desily_ One India, Every Voice (2).png (2172×724 RGBA, transparent background, horizontal layout: chakra-badge icon on LEFT + "Desily" wordmark + tagline on RIGHT).
+- PIXEL ANALYSIS: VLM-verified new logo has alpha=0 at all 4 corners (truly transparent, no halo). Previous logo's white-box issue was likely from a faint semi-opaque halo around the icon that I missed in Task 33's crop, OR from the previous 1254×1254 square aspect ratio including too much padding around the chakra.
+- ASPECT RATIO CHANGE: new source is 2172×724 (3:1 landscape) vs previous 1254×1254 (1:1 square). Horizontal lockup, not stacked. Required rewriting the install script's crop strategy.
+- ICON CROP BOUNDARY DISCOVERY: pixel-scanned the source to find where the icon ends and the wordmark begins. Found: icon content (chakra + ribbons + dots) extends from x=0 to x=790, clean internal gap at x=770, wordmark "D" begins at x=800 (white pixels). Perfect crop boundary = x=795 (5px safety margin). At this boundary: 0 white pixels at right edge (no wordmark bleed), all 3 colored dots fully visible, all ribbons fully visible, chakra complete.
+- ITERATIVE CROP REFINEMENT: tried 27% (cut off green dot + ribbons), 33% (cut off green dot), 36% (VLM said ribbons cut), 38% (wordmark "D" bled in — 427 white pixels at right edge), 40% (more wordmark bleed), 34% (green dot cut off). Final: 36.6% (x=795) — pixel-verified 0 white pixels at right edge, VLM-confirmed all 5 quality checks pass.
+- NEW ASSETS (8 files in /public, all transparent PNG except apple-touch-icon):
+  • desily-logo.png         — full lockup, 2172×724, verbatim from user
+  • desily-logo-wide.png    — 1400×467 resized wide lockup (PNG, not JPG — preserves transparency)
+  • desily-icon.png         — 795×724 icon crop, transparent bg, no wordmark bleed
+  • desily-icon-192.png     — 192×192 PWA icon, transparent bg
+  • desily-icon-512.png     — 512×512 PWA icon, transparent bg
+  • apple-touch-icon.png    — 180×180, navy padded (solid bg for iOS home screen)
+  • favicon-16.png + -32.png — browser tab icons, transparent bg
+- Removed: public/desily-logo-wide.jpg (JPG can't have alpha — replaced by PNG).
+- LOGO COMPONENT: src/components/social/Logo.tsx — LogoFull now renders /desily-logo-wide.png (was .jpg). LogoSquare renders /desily-logo.png (full landscape lockup, was square). LogoMark unchanged (renders /desily-icon.png).
+- METADATA: src/app/layout.tsx — OG image dimensions corrected from 1254×1254 to 2172×724 (matches new source aspect ratio).
+- VERIFICATION: tsc --noEmit CLEAN. eslint . CLEAN. bun run build SUCCESS — 39 routes compiled in ~21s. Pixel-verified: icon crop has 0 white pixels at right edge (no wordmark bleed), alpha=0 at all corners (truly transparent). VLM-verified: all 3 colored dots fully visible, all ribbons fully visible, chakra complete, wordmark not visible, icon well-composed.
+- FIXES THE WHITE-BOX ISSUE: the new logo's icon crop is truly transparent (alpha=0 verified at all 4 corners + edges). The previous logo's white-box-on-dark-sidebar issue is resolved because (a) the new source PNG has clean transparency with no halo, (b) the crop boundary is precisely at the icon/wordmark border (no excess padding that could trap semi-opaque pixels), (c) all derivatives preserve the alpha channel (PNG not JPG).
+
+Stage Summary:
+- User's actual wide-landscape Desily logo installed across the app. Previous square logo + JPG derivative removed. White-box-on-dark-sidebar issue resolved. Logo assets: 8 PNG files in /public (7 transparent + 1 navy-padded apple-touch-icon). To replace later: drop new PNG at upload/Desily_ One India, Every Voice (2).png and re-run `node scripts/install-desily-logo.mjs`.

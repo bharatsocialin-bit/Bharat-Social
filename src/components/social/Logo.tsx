@@ -37,12 +37,12 @@ export function LogoMark({ className }: { className?: string }) {
 /**
  * Full horizontal Desily logo image (icon + wordmark + tagline).
  *
- * Renders the user's official wide lockup at /desily-logo-wide.jpg — a
- * 1400×400 landscape image containing the icon, "Desily" wordmark, and
+ * Renders the user's official wide lockup at /desily-logo-wide.png — a
+ * 1400×467 landscape image containing the icon, "Desily" wordmark, and
  * "One India. Every Voice." tagline. Best used in wide containers like
  * the desktop sidebar and the homepage hero.
  *
- * @param heightPx - pixel height; width auto-scales to preserve the 3.5:1 ratio.
+ * @param heightPx - pixel height; width auto-scales to preserve the 3:1 ratio.
  */
 export function LogoFull({
   className,
@@ -53,7 +53,7 @@ export function LogoFull({
 }) {
   return (
     <img
-      src="/desily-logo-wide.jpg"
+      src="/desily-logo-wide.png"
       alt="Desily — One India. Every Voice."
       className={cn('object-contain', className)}
       style={{ height: `${heightPx}px`, width: 'auto' }}
@@ -62,9 +62,9 @@ export function LogoFull({
 }
 
 /**
- * Full square lockup (icon + wordmark + tagline stacked vertically).
- * Use in large square containers like auth dialogs, onboarding screens,
- * or about pages. Renders the original 1254×1254 user-provided PNG.
+ * Full landscape lockup (icon + wordmark + tagline side-by-side).
+ * Use in auth dialogs, onboarding screens, or about pages. Renders the
+ * original 2172×724 user-provided PNG (verbatim, no resizing).
  */
 export function LogoSquare({ className }: { className?: string }) {
   return (
