@@ -159,7 +159,7 @@ export function ResultsScreen({ onPlayAgain, onBackToLanding }: ResultsScreenPro
 
   function handleShare() {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      const text = `I scored ${totalPoints} points on BharatSocial India Quiz (${correctCount}/${totalQuestions} correct, ${accuracy}% accuracy). Play at BharatSocial.in!`;
+      const text = `I scored ${totalPoints} points on Desily India Quiz (${correctCount}/${totalQuestions} correct, ${accuracy}% accuracy). Play now!`;
       navigator.clipboard.writeText(text).catch(() => {});
     }
     toast({

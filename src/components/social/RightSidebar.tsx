@@ -60,7 +60,7 @@ export function RightSidebar() {
       {/* Search */}
       <div className="sticky top-0 z-10 -mx-1 bg-background/80 px-1 py-1 backdrop-blur">
         <label htmlFor="explore-search" className="sr-only">
-          Search BharatSocial
+          Search Desily
         </label>
         <div className="group flex items-center gap-2 rounded-full border border-border bg-muted/40 px-4 py-2.5 transition-colors focus-within:border-saffron focus-within:bg-card focus-within:ring-2 focus-within:ring-saffron/20">
           <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -68,7 +68,7 @@ export function RightSidebar() {
             id="explore-search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search BharatSocial"
+            placeholder="Search Desily"
             className="w-full bg-transparent text-sm text-white placeholder:text-muted-foreground focus:outline-none"
             type="search"
           />
@@ -291,7 +291,7 @@ export function RightSidebar() {
           <a href="#" className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron rounded">Help</a>
         </nav>
         <p className="mt-2" suppressHydrationWarning>
-          © {new Date().getFullYear()} BharatSocial. Demonstration prototype.
+          © {new Date().getFullYear()} Desily. Demonstration prototype.
         </p>
       </footer>
     </aside>

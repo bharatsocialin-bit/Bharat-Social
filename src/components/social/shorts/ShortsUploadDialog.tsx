@@ -217,7 +217,7 @@ export function ShortsUploadDialog({ open, onOpenChange, onUploaded }: ShortsUpl
       setPhase('success');
       toast({
         title: 'Short published!',
-        description: 'Your short is now live in the BharatSocial feed.',
+        description: 'Your short is now live in the Desily feed.',
       });
       onUploaded?.();
     } catch (e) {
@@ -454,7 +454,7 @@ export function ShortsUploadDialog({ open, onOpenChange, onUploaded }: ShortsUpl
               </span>
               <h3 className="text-base font-semibold">Short published!</h3>
               <p className="text-sm text-white/60">
-                Your short is now live in the BharatSocial Shorts feed.
+                Your short is now live in the Desily Shorts feed.
               </p>
               <button
                 type="button"

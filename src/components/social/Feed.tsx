@@ -106,7 +106,7 @@ export function Feed({ composerRef }: FeedProps) {
               ? 'Try a different keyword, or clear the search to see the whole feed.'
               : feedTab === 'following'
                 ? 'Follow some accounts to see their posts in this view.'
-                : 'Be the first to post on BharatSocial.'
+                : 'Be the first to post on Desily.'
           }
           className="min-h-[40vh]"
         />

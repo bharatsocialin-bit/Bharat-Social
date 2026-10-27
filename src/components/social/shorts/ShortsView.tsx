@@ -194,7 +194,7 @@ export function ShortsView() {
           <EmptyState
             icon={Film}
             title="No Shorts yet"
-            description="Be the first to share a short video on BharatSocial. Upload an MP4, WebM, or MOV file (max 50 MB, 3 minutes)."
+            description="Be the first to share a short video on Desily. Upload an MP4, WebM, or MOV file (max 50 MB, 3 minutes)."
             action={
               <button
                 type="button"

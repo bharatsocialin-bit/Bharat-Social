@@ -316,7 +316,7 @@ export function ProfileView() {
               )}
               <span className="inline-flex items-center gap-1">
                 <LinkIcon className="h-3.5 w-3.5" />
-                bharatsocial.in/{display.handle}
+                @{display.handle}
               </span>
               {display.createdAt && (
                 <span className="inline-flex items-center gap-1" suppressHydrationWarning>

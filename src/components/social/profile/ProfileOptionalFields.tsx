@@ -115,7 +115,7 @@ export function ProfileOptionalFields({
           onChange={(e) => setField('dateOfBirth', e.target.value)}
         />
         <p className="text-xs text-muted-foreground">
-          We ask for this only to confirm you meet BharatSocial&apos;s minimum age
+          We ask for this only to confirm you meet Desily&apos;s minimum age
           requirement (13+). It is stored privately and never shown on your profile.
         </p>
       </div>

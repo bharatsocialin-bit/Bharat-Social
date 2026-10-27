@@ -10,14 +10,14 @@ interface LogoProps {
 }
 
 /**
- * BharatSocial brand mark — Ashoka Chakra-inspired SVG icon.
+ * Desily brand mark — a stylized "D" formed by a navy arc and a saffron
+ * vertical bar, with a green accent dot. Indian-inspired geometric form
+ * (lotus-petal curve + chakra dot) without copying the national flag or
+ * national emblem.
  *
- * A navy ring with 8 spokes (referencing the Ashoka Chakra on the Indian
- * flag) surrounding a saffron center. Used in compact spots like the
- * mobile header and collapsed sidebar.
- *
- * The whole identity flows from the CSS variables in globals.css, so to
- * rebrand you only need to change those tokens.
+ * The mark uses the brand palette directly via CSS custom properties
+ * declared in globals.css (--saffron, --india-green, --navy). To re-palette
+ * the brand, change those tokens once in globals.css.
  */
 export function LogoMark({ className }: { className?: string }) {
   return (
@@ -26,46 +26,35 @@ export function LogoMark({ className }: { className?: string }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="BharatSocial logo"
+      aria-label="Desily logo"
       className={cn('h-9 w-9', className)}
     >
-      {/* Navy outer ring (the chakra wheel) */}
-      <circle cx="20" cy="20" r="17" fill="none" stroke="var(--navy)" strokeWidth="2.5" />
-      {/* 8 spokes radiating from the center — Ashoka Chakra inspired */}
-      {Array.from({ length: 8 }).map((_, i) => {
-        const angle = (i * 45 * Math.PI) / 180;
-        const x1 = 20 + Math.cos(angle) * 4;
-        const y1 = 20 + Math.sin(angle) * 4;
-        const x2 = 20 + Math.cos(angle) * 15.5;
-        const y2 = 20 + Math.sin(angle) * 15.5;
-        return (
-          <line
-            key={i}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke="var(--navy)"
-            strokeWidth="1.3"
-            strokeLinecap="round"
-          />
-        );
-      })}
-      {/* Saffron center dot */}
-      <circle cx="20" cy="20" r="4.5" fill="var(--saffron)" />
-      {/* Small green accent ring inside the saffron dot */}
-      <circle cx="20" cy="20" r="1.5" fill="var(--india-green)" />
+      <defs>
+        <linearGradient id="desily-petal-inline" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="var(--saffron)" />
+          <stop offset="100%" stopColor="var(--india-green)" />
+        </linearGradient>
+      </defs>
+      {/* Navy "D" — straight bar + curved arc */}
+      <path
+        d="M 8 6 L 8 34 L 14 34 L 14 6 Z M 14 6 A 14 14 0 1 1 14 34 L 14 28 A 8 8 0 1 0 14 12 Z"
+        fill="var(--navy)"
+      />
+      {/* Saffron vertical bar (the straight stroke of the "D") */}
+      <rect x="14" y="6" width="3.4" height="28" fill="var(--saffron)" />
+      {/* Green accent dot inside the curve — chakra-inspired punctuation */}
+      <circle cx="26" cy="20" r="3.4" fill="url(#desily-petal-inline)" />
     </svg>
   );
 }
 
 /**
- * Full horizontal BharatSocial logo image (icon + wordmark + tagline).
+ * Full horizontal Desily logo image (icon + wordmark + tagline).
  *
- * Uses the uploaded community logo PNG which is a 3:1 landscape image
- * (2172×724) containing the icon, "BharatSocial" wordmark, and "One India.
- * Every Voice." tagline. Best used in wide containers like the desktop sidebar
- * and the homepage hero.
+ * Renders the SVG lockup at /desily-logo.svg — a 3:1 landscape image
+ * containing the icon, "Desily" wordmark, and "One India. Every Voice."
+ * tagline. Best used in wide containers like the desktop sidebar and the
+ * homepage hero.
  *
  * @param heightPx - pixel height; width auto-scales to preserve the 3:1 ratio.
  */
@@ -78,15 +67,15 @@ export function LogoFull({
 }) {
   return (
     <img
-      src="/bharatsocial-logo.png"
-      alt="BharatSocial — One India. Every Voice."
+      src="/desily-logo.svg"
+      alt="Desily — One India. Every Voice."
       className={cn('object-contain', className)}
       style={{ height: `${heightPx}px`, width: 'auto' }}
     />
   );
 }
 
-export function Logo({ className, withWordmark = true, wordmark = 'BharatSocial' }: LogoProps) {
+export function Logo({ className, withWordmark = true, wordmark = 'Desily' }: LogoProps) {
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <LogoMark className="h-9 w-9" />

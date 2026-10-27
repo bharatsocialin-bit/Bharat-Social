@@ -14,7 +14,7 @@ export function MobileHeader({ onCompose }: MobileHeaderProps) {
   const activeNav = useSocialStore((s) => s.activeNav);
 
   const titles: Record<string, string> = {
-    home: 'BharatSocial',
+    home: 'Desily',
     explore: 'Explore',
     pulse: 'India Pulse',
     feed: 'Feed',
@@ -31,7 +31,7 @@ export function MobileHeader({ onCompose }: MobileHeaderProps) {
     <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-sidebar-border bg-sidebar/90 px-3 py-2.5 backdrop-blur md:hidden">
       <div className="flex items-center gap-2">
         <LogoMark className="h-8 w-8" />
-        <h1 className="text-base font-bold text-white">{titles[activeNav] ?? 'BharatSocial'}</h1>
+        <h1 className="text-base font-bold text-white">{titles[activeNav] ?? 'Desily'}</h1>
       </div>
 
       <div className="ml-auto flex items-center gap-2">

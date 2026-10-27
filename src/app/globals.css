@@ -4,9 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ─────────────────────────────────────────────────────────────────────────
-   BharatSocial — Brand Theme v3 (Tricolor Redesign)
-   Inspired by the Indian flag: saffron + green + navy on warm ivory.
-   To rebrand: change the variables in :root below.
+   Desily — Brand Theme v3 (Tricolor Redesign)
+   Inspired by the Indian flag palette: saffron + green + navy on warm ivory.
+   To re-palette the brand: change the variables in :root below.
    ──────────────────────────────────────────────────────────────────────── */
 
 @theme inline {

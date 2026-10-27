@@ -195,7 +195,7 @@ export function NavPanel({ navKey }: { navKey: NavKey }) {
       >
         <div className="space-y-4 p-4">
           <label htmlFor="explore-inline-search" className="sr-only">
-            Search BharatSocial
+            Search Desily
           </label>
           <div className="flex items-center gap-2 rounded-full border border-border bg-muted/40 px-4 py-2.5 transition-colors focus-within:border-brand focus-within:bg-card focus-within:ring-2 focus-within:ring-brand/20">
             <Search className="h-4 w-4 text-muted-foreground" />
@@ -260,7 +260,7 @@ export function NavPanel({ navKey }: { navKey: NavKey }) {
             { label: 'Notifications', hint: 'Email and push preferences' },
             { label: 'Display', hint: 'Theme, text size' },
             { label: 'Accessibility', hint: 'Reduced motion, contrast' },
-            { label: 'About BharatSocial', hint: 'Version, terms, contact' },
+            { label: 'About Desily', hint: 'Version, terms, contact' },
           ].map(({ label, hint }) => (
             <button
               key={label}

@@ -431,7 +431,7 @@ export async function POST(request: Request) {
       finishedAt: attempt.finishedAt,
     });
 
-    // ── Evaluate and award BharatSocial Badges ──
+    // ── Evaluate and award Desily Badges ──
     // (separate from the older QuizAchievement system above; both run
     // idempotently — the unique constraint prevents duplicates.)
     const newlyAwardedBadges = await evaluateAndAwardBadges({

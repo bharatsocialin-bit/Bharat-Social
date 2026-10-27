@@ -144,7 +144,7 @@ export function OnboardingView({ profile, onComplete }: OnboardingViewProps) {
       }
 
       toast({
-        title: 'Welcome to BharatSocial! 🇮🇳',
+        title: 'Welcome to Desily! 🇮🇳',
         description: 'Your profile is ready. You can update it anytime from your profile page.',
       });
       void loadCurrentProfile();
@@ -224,7 +224,7 @@ export function OnboardingView({ profile, onComplete }: OnboardingViewProps) {
                 : availability === 'taken'
                   ? availabilityNote
                   : availability === 'available'
-                    ? `bharatsocial.in/${username.trim().toLowerCase()} is available.`
+                    ? `@${username.trim().toLowerCase()} is available.`
                     : '3–30 characters; letters, numbers and underscores. This is your public handle.'}
             </p>
           </div>
@@ -264,7 +264,7 @@ export function OnboardingView({ profile, onComplete }: OnboardingViewProps) {
                 Saving…
               </>
             ) : (
-              'Enter BharatSocial'
+              'Enter Desily'
             )}
           </Button>
         </form>

@@ -1,0 +1,38 @@
+{
+  "name": "Desily — One India. Every Voice.",
+  "short_name": "Desily",
+  "description": "A modern social space for people across India. Share short posts, follow what you love, and stay close to your communities — in English, हिन्दी, తెలుగు and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFDF7",
+  "theme_color": "#0B2545",
+  "orientation": "portrait-primary",
+  "categories": ["social", "communication", "news"],
+  "lang": "en-IN",
+  "icons": [
+    {
+      "src": "/desily-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/desily-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/desily-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

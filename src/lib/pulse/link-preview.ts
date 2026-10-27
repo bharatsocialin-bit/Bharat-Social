@@ -96,7 +96,7 @@ export async function fetchLinkPreview(
       headers: {
         // Pretend to be a browser so sites serve the HTML version.
         'User-Agent':
-          'Mozilla/5.0 (compatible; BharatSocial-LinkPreview/1.0; +https://bharat-social-mu.vercel.app)',
+          'Mozilla/5.0 (compatible; Desily-LinkPreview/1.0; +https://bharat-social-mu.vercel.app)',
         Accept: 'text/html,application/xhtml+xml',
       },
     });

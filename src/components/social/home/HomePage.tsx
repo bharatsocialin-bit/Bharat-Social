@@ -511,7 +511,7 @@ export function HomePage() {
           <div className="h-full bg-tricolor-horizontal opacity-50" />
         </div>
         <p className="text-center text-xs text-muted-foreground">
-          BharatSocial — A social space for everyone across India. Demonstration prototype.
+          Desily — A social space for everyone across India. Demonstration prototype.
         </p>
       </div>
     </div>
@@ -596,7 +596,7 @@ function HeroBanner({ setActiveNav }: { setActiveNav: (nav: NavKey) => void }) {
   return (
     <section
       className="relative overflow-hidden"
-      aria-label="BharatSocial hero"
+      aria-label="Desily hero"
     >
       {/* ── Full-bleed sunset + glowing India map background ── */}
       <div
@@ -681,7 +681,7 @@ function HeroBanner({ setActiveNav }: { setActiveNav: (nav: NavKey) => void }) {
             style={{ background: 'rgba(15, 23, 42, 0.75)' }}
           >
             <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/50">
-              Why BharatSocial
+              Why Desily
             </h2>
             <ul className="space-y-3.5">
               {HERO_BENEFITS.map(({ label, icon: Icon }) => (

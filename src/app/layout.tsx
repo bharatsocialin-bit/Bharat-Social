@@ -29,13 +29,24 @@ const notoSans = Noto_Sans({
   display: "swap",
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Branding note (rebrand 2026-10):
+//   Public-facing brand is "Desily — One India. Every Voice."
+//   The deployed domain is NOT changed here. The canonical production URL
+//   remains the existing Vercel deployment until the user confirms the new
+//   domain. See REBRANDING.md (and the report accompanying this commit) for
+//   the full domain-update checklist.
+//
+//   DO NOT introduce a hardcoded `https://desily.in` (or any other) URL
+//   until the user confirms the secured domain.
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const metadata: Metadata = {
-  title: "BharatSocial — One India. Every Voice.",
+  title: "Desily — One India. Every Voice.",
   description:
-    "BharatSocial is a modern social space for people across India. Share short posts, follow what you love, and stay close to your communities — in English, हिन्दी, తెలుగు and more.",
+    "Desily is a modern social space for people across India. Share short posts, follow what you love, and stay close to your communities — in English, हिन्दी, తెలుగు and more.",
   keywords: [
-    "BharatSocial",
-    "Bharat Social",
+    "Desily",
     "social media India",
     "Indian social network",
     "short posts",
@@ -44,29 +55,49 @@ export const metadata: Metadata = {
     "India",
     "One India Every Voice",
   ],
-  authors: [{ name: "BharatSocial" }],
-  applicationName: "BharatSocial",
+  authors: [{ name: "Desily" }],
+  applicationName: "Desily",
   icons: {
-    icon: "/logo.svg",
-    apple: "/bharatsocial-logo.png",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/desily-icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/desily-icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180" },
+    ],
+    shortcut: ["/favicon.svg"],
   },
-  manifest: undefined,
+  manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "BharatSocial — One India. Every Voice.",
+    title: "Desily — One India. Every Voice.",
     description: "A modern social space for people across India. One India. Every Voice.",
-    siteName: "BharatSocial",
+    siteName: "Desily",
     type: "website",
-    url: "https://BharatSocial.in",
+    // NOTE: `url` deliberately omitted — the canonical domain is not yet
+    // confirmed. Open Graph consumers will fall back to the request URL,
+    // which is correct for both the Vercel preview domain and any future
+    // custom domain.
+    images: [
+      {
+        url: "/desily-logo.png",
+        width: 1200,
+        height: 400,
+        alt: "Desily — One India. Every Voice.",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BharatSocial — One India. Every Voice.",
+    title: "Desily — One India. Every Voice.",
     description: "A modern social space for people across India. One India. Every Voice.",
+    images: ["/desily-logo.png"],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  // Brand navy — matches the favicon background and the PWA manifest theme.
+  themeColor: "#0B2545",
   width: "device-width",
   initialScale: 1,
   // Respect iOS safe areas so the mobile bottom nav doesn't get clipped.

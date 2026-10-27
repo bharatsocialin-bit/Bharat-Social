@@ -46,9 +46,17 @@ export const RESERVED_USERNAMES = new Set([
   'helpdesk',
   'security',
   'official',
+  // Legacy brand variants — retained defensively so a legacy handle cannot
+  // be squatted even after the public rename. (Internal identifier; do not
+  // surface in UI.)
   'bharatsocial',
   'bharat_social',
   'bharatsocialin',
+  // Current brand variants — reserved to prevent impersonation.
+  'desily',
+  'desilyofficial',
+  'desily_in',
+  'desilyapp',
   'api',
   'system',
   'staff',
@@ -204,7 +212,7 @@ export function validateGender(raw: unknown): { ok: boolean; value: string | nul
 // ── Date of birth / minimum-age policy ─────────────────────────────────────
 
 /**
- * Minimum age required by the platform's age policy. BharatSocial is a
+ * Minimum age required by the platform's age policy. Desily is a
  * general-audience community for India; accounts require a minimum age of
  * 13 (aligned with mainstream Indian platforms). Raise this constant if
  * the policy changes.
@@ -265,7 +273,7 @@ export function validateDateOfBirth(raw: unknown): DobValidation {
       ok: false,
       date: null,
       error:
-        `BharatSocial requires a minimum age of ${MIN_AGE_YEARS}. ` +
+        `Desily requires a minimum age of ${MIN_AGE_YEARS}. ` +
         'You cannot register with this date of birth.',
     };
   }

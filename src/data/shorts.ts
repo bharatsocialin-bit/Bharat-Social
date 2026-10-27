@@ -1,7 +1,7 @@
 import type { VideoPost } from '@/lib/types';
 
 // ───────────────────────────────────────────────────────────────────────────
-// DEMONSTRATION DATA — fictional short videos used only by the BharatSocial
+// DEMONSTRATION DATA — fictional short videos used only by the Desily
 // Shorts prototype. None of these represent real creators or real videos.
 //
 // The `videoUrl` field points at publicly available sample videos commonly

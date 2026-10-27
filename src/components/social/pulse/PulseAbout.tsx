@@ -20,7 +20,7 @@ export function PulseAbout() {
           What is India Pulse?
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-foreground/80">
-          India Pulse is a signature layer of BharatSocial that surfaces
+          India Pulse is a signature layer of Desily that surfaces
           city-level public conversations and groups related stories across
           languages and regions. It is built around four ideas:
         </p>

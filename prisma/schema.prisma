@@ -1,4 +1,4 @@
-// Prisma schema for BharatSocial
+// Prisma schema for Desily (legacy project name: BharatSocial)
 // Provider: postgresql (Supabase, migration gate G6 — see MIGRATION.md).
 // SQLite backup of the pre-migration schema: prisma/schema.sqlite.bak.prisma
 
