@@ -198,3 +198,25 @@ Work Log:
 Stage Summary:
 - Rebrand complete in code. Public brand is now "Desily — One India. Every Voice." across all user-facing surfaces. New logo + PWA manifest + favicon deployed as static assets. All existing functionality, DB records, users, auth flows, and integrations preserved — no destructive changes, no migrations, no breaking API/route changes.
 - Remaining user actions: (1) REVIEW the changes locally (git show 1b1fe92); (2) decide whether to push (when ready, `git push origin main` will trigger Vercel auto-deploy); (3) when domain is confirmed, follow REBRANDING.md checklist (Vercel → Supabase → Google OAuth → NextAuth → link-preview UA → optional GitHub/Vercel project rename); (4) optional: supply a custom Desily logo file if the geometric mark I created doesn't match their vision — drop-in replace the SVGs/PNGs at the same paths.
+
+---
+Task ID: 33
+Agent: Super Z (main)
+Task: Install user's actual Desily logo (replacing the placeholder geometric mark from Task 32).
+
+Work Log:
+- User uploaded their actual Desily logo PNG (1254×1254, RGBA) + a UI dashboard reference image. The logo contains: circular badge with Ashoka Chakra (24-spoke wheel), tricolor ribbons (saffron + navy + green swirls), three "people" dots (saffron, blue, green) on top, "Desily" wordmark (navy with saffron dot on 'i'), "One India. Every Voice." tagline (One India = saffron, Every Voice = green).
+- VLM analysis confirmed the user's logo overrides my earlier placeholder geometric "D" mark (Task 32). User's logo uses the Ashoka Chakra + tricolor ribbons — this DOES use Indian national symbols, but it's the user's actual approved artwork so it takes precedence over the earlier "no national emblem" design direction.
+- ASSET GENERATION: new scripts/install-desily-logo.mjs (idempotent sharp-based script) generates 8 derivative assets from the user's PNG: desily-logo.png (verbatim 1254×1254 full lockup), desily-logo-wide.jpg (1400×400 padded landscape for sidebar/hero), desily-icon.png (1104×803 icon-only crop — top 64% of square, 88% width centered, preserves ribbon tips), desily-icon-192.png + desily-icon-512.png (PWA), apple-touch-icon.png (180×180 navy padded), favicon-16.png + favicon-32.png (browser tab). VLM-verified the icon crop is clean (ribbon tips fully visible).
+- CLEANUP: removed my placeholder SVGs from Task 32 that no longer match the brand — public/desily-icon.svg, public/desily-icon-mono.svg, public/desily-logo.svg, public/favicon.svg. Also removed orphaned legacy assets public/bharatsocial-logo.png, public/logo.svg. Removed scripts/generate-desily-pngs.mjs (replaced by install-desily-logo.mjs). Final public/ logo footprint: 8 PNG/JPG derivatives + manifest.
+- LOGO COMPONENT: src/components/social/Logo.tsx — LogoMark now renders /desily-icon.png (the user's actual chakra badge). LogoFull renders /desily-logo-wide.jpg (padded landscape). New LogoSquare component renders /desily-logo.png (full 1254×1254 lockup) for use in auth dialogs / onboarding / about pages.
+- METADATA: src/app/layout.tsx — icons array updated to PNG-only (favicon-16/32 + desily-icon-192/512 + apple-touch-icon). OG image updated to desily-logo.png at 1254×1254 (matches actual asset dimensions). Twitter image same. Manifest URL unchanged.
+- PWA MANIFEST: public/manifest.webmanifest — icons array refreshed with PNG entries (favicon-32, desily-icon-192, desily-icon-512 with maskable, apple-touch-icon).
+- DASHBOARD REFERENCE: 2nd uploaded image (Desily India Social Dashboard.png) is a UI design reference showing the aspirational layout. VLM-analyzed: 3-column desktop layout, nav includes Communities/Jobs/Government Schemes/Marketplace (4 features NOT yet built in current app — flagged in Phase 1 audit), hero with India Gate + glowing India map, 4 feature cards, multilingual composer with Telugu visible, ranked trending topics sidebar. Documented in REBRANDING.md as deferred future work — current commit is brand-swap only, NOT a UI overhaul.
+- VERIFICATION: tsc --noEmit CLEAN. eslint . CLEAN (zero warnings). bun run build SUCCESS — 39 routes compiled in ~21s. All 8 logo assets in /public. VLM-verified icon crop is clean.
+- NOT PUSHED — still local-only per user's "Do not deploy automatically" instruction from Task 32. Branch is now 3 commits ahead of origin/main (Task 31 user-stories feature + Task 32 rebrand + this Task 33 logo swap). When user approves, single `git push origin main` deploys everything.
+
+Stage Summary:
+- User's actual Desily logo now installed across the app: LogoMark (mobile header, collapsed sidebar), LogoFull (desktop sidebar, hero), LogoSquare (auth dialogs, onboarding), favicon (browser tab), apple-touch-icon (iOS home screen), PWA manifest icons, OG/Twitter card image. All placeholder SVGs removed.
+- To replace the logo later: drop a new PNG at upload/Desily One India Every Voice Logo.png and re-run `node scripts/install-desily-logo.mjs`.
+- Dashboard reference image documented for future UI work — NOT implemented in this commit.

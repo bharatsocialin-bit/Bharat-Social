@@ -59,14 +59,15 @@ export const metadata: Metadata = {
   applicationName: "Desily",
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/desily-icon-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/desily-icon-512.png", type: "image/png", sizes: "512x512" },
+      { url: '/favicon-32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon-16.png', type: 'image/png', sizes: '16x16' },
+      { url: '/desily-icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/desily-icon-512.png', type: 'image/png', sizes: '512x512' },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180" },
+      { url: '/apple-touch-icon.png', sizes: '180x180' },
     ],
-    shortcut: ["/favicon.svg"],
+    shortcut: ['/favicon-32.png'],
   },
   manifest: "/manifest.webmanifest",
   openGraph: {
@@ -81,8 +82,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/desily-logo.png",
-        width: 1200,
-        height: 400,
+        width: 1254,
+        height: 1254,
         alt: "Desily — One India. Every Voice.",
       },
     ],

@@ -8,7 +8,7 @@ This document tracks everything that needs to change **when you secure the new d
 |------|-------|--------|
 | Public brand name | Desily | ✅ Updated everywhere user-facing |
 | Tagline | One India. Every Voice. | ✅ Kept |
-| Logo | New Desily mark (saffron bar + navy arc + green dot) | ✅ Multiple variants in `/public` |
+| Logo | User-provided Desily logo (circular chakra badge + tricolor ribbons + 3 dots + wordmark + tagline) | ✅ Installed in `/public` |
 | PWA manifest | `desily` short_name, navy theme | ✅ `/public/manifest.webmanifest` |
 | Production URL | `https://bharat-social-mu.vercel.app` | ⚠️ Unchanged (no new domain confirmed yet) |
 | GitHub repo | `bharatsocialin-bit/Bharat-Social` | ⚠️ Unchanged (rename via GitHub Settings → Repository name when ready) |
@@ -93,10 +93,24 @@ These will continue to function identically before, during, and after the rebran
 ## Files changed in this rebrand commit
 
 See the commit message for the full file list. Summary:
-- **Logo assets** (new): `public/desily-icon.svg`, `public/desily-icon-mono.svg`, `public/desily-logo.svg`, `public/desily-logo.png`, `public/desily-icon-192.png`, `public/desily-icon-512.png`, `public/apple-touch-icon.png`, `public/favicon.svg`, `public/manifest.webmanifest`
+- **Logo assets** (new, user-provided): `public/desily-logo.png` (full square lockup, 1254×1254, verbatim from user), `public/desily-logo-wide.jpg` (1400×400 padded landscape), `public/desily-icon.png` (icon-only crop), `public/desily-icon-192.png` + `public/desily-icon-512.png` (PWA), `public/apple-touch-icon.png` (180×180 navy padded), `public/favicon-16.png` + `public/favicon-32.png` (browser tab), `public/manifest.webmanifest` (PWA manifest)
+- **Asset generator**: `scripts/install-desily-logo.mjs` (idempotent — re-run if the user uploads a new logo: drop the new PNG into `upload/Desily One India Every Voice Logo.png` and re-run)
+- **Removed**: `public/bharatsocial-logo.png` (legacy), `public/logo.svg` (legacy placeholder), `public/desily-icon.svg` + `desily-icon-mono.svg` + `desily-logo.svg` + `favicon.svg` (placeholder SVGs from initial rebrand commit — replaced by user's actual PNG artwork), `scripts/generate-desily-pngs.mjs` (replaced by `install-desily-logo.mjs`)
 - **Branding text updates**: `src/app/layout.tsx` (metadata), `src/app/globals.css` (comment), `src/components/social/Logo.tsx`, plus user-facing strings in `MobileHeader`, `NavPanel`, `RightSidebar`, `HomePage`, `Feed`, `ProfileView`, `OnboardingView`, `ProfileOptionalFields`, `PulseAbout`, `ResultsScreen`, `ShortsView`, `ShortsUploadDialog`, `AuthDialog`
 - **Defensive reserved usernames**: `src/lib/profile.ts` (kept `bharatsocial*`, added `desily*`)
 - **Comments**: `src/lib/types.ts`, `src/data/shorts.ts`, `src/data/users.ts`, `src/app/api/quiz/attempts/route.ts`, `prisma/schema.prisma`, `.env.example`
 - **User-Agent string** (link preview): `src/lib/pulse/link-preview.ts`
-- **Asset generator**: `scripts/generate-desily-pngs.mjs` (one-off script — re-run if logo SVG changes)
-- **This checklist**: `REBRANDING.md` (new)
+- **This checklist**: `REBRANDING.md`
+
+## UI dashboard reference (deferred — for future work)
+
+The user also shared a UI dashboard reference image (`Desily India Social Dashboard.png`) showing the aspirational design. The current commit focuses on the brand swap only; the dashboard reference is documented here for a future UI overhaul task. Key differences from the current app:
+
+- **Nav items not yet built**: Communities (groups), Jobs, Government Schemes, Marketplace — all four are stubs in the current app per the Phase 1 audit
+- **Hero banner**: India Gate photo + glowing India map network overlay + "Join Desily" CTA + secondary "Explore India Pulse" CTA + floating info card
+- **4 feature cards**: India Pulse / Shorts / India Quiz / Explore (current HomePage has a similar section but with different copy)
+- **Multilingual composer**: language selector pill (English + Telugu visible) + translation toggle icon — partial implementation exists (Bhasha Bridge)
+- **Right sidebar trending topics**: ranked list of 10 hashtags with post counts + velocity arrows — current TrendingTab shows topics but with different visual treatment
+- **Color palette**: deep navy `#0f172a` background, navy `#1e293b` cards, vibrant orange `#f97316` CTAs, emerald `#10b981` accents, blue `#3b82f6` and violet `#8b5cf6` for tertiary accents
+
+When the user is ready to align the UI with this reference, that's a separate multi-task effort. The brand swap in this commit is the foundation — once the new logo and name are in place, the UI layout work can proceed without re-litigating the brand.
