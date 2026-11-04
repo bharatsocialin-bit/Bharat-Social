@@ -144,7 +144,7 @@ export function OnboardingView({ profile, onComplete }: OnboardingViewProps) {
       }
 
       toast({
-        title: 'Welcome to Desily! 🇮🇳',
+        title: 'Welcome to Lordsbook! ✛',
         description: 'Your profile is ready. You can update it anytime from your profile page.',
       });
       void loadCurrentProfile();
@@ -264,7 +264,7 @@ export function OnboardingView({ profile, onComplete }: OnboardingViewProps) {
                 Saving…
               </>
             ) : (
-              'Enter Desily'
+              'Enter Lordsbook'
             )}
           </Button>
         </form>

@@ -217,7 +217,7 @@ export function ShortsUploadDialog({ open, onOpenChange, onUploaded }: ShortsUpl
       setPhase('success');
       toast({
         title: 'Short published!',
-        description: 'Your short is now live in the Desily feed.',
+        description: 'Your faith reel is now live in the Lordsbook feed.',
       });
       onUploaded?.();
     } catch (e) {
@@ -454,7 +454,7 @@ export function ShortsUploadDialog({ open, onOpenChange, onUploaded }: ShortsUpl
               </span>
               <h3 className="text-base font-semibold">Short published!</h3>
               <p className="text-sm text-white/60">
-                Your short is now live in the Desily Shorts feed.
+                Your faith reel is now live in the Lordsbook Faith Reels feed.
               </p>
               <button
                 type="button"

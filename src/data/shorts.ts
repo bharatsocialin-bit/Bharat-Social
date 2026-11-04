@@ -1,8 +1,8 @@
 import type { VideoPost } from '@/lib/types';
 
 // ───────────────────────────────────────────────────────────────────────────
-// DEMONSTRATION DATA — fictional short videos used only by the Desily
-// Shorts prototype. None of these represent real creators or real videos.
+// DEMONSTRATION DATA — fictional short videos used only by the Lordsbook
+// Faith Reels prototype. None of these represent real creators or real videos.
 //
 // The `videoUrl` field points at publicly available sample videos commonly
 // used for HTML5 video testing. If a URL is unreachable in the user's

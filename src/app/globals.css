@@ -4,8 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Desily — Brand Theme v3 (Tricolor Redesign)
-   Inspired by the Indian flag palette: saffron + green + navy on warm ivory.
+   Lordsbook — Brand Theme (Royal Blue + Gold on Midnight Navy)
+   Palette inspired by the Lordsbook shield emblem: royal blue border,
+   silver interior, gold cross, on deep navy/black.
    To re-palette the brand: change the variables in :root below.
    ──────────────────────────────────────────────────────────────────────── */
 
@@ -76,17 +77,22 @@
   --popover: #142E49;                             /* elevated card background */
   --popover-foreground: #FFFFFF;
 
-  /* ── Brand — Saffron (primary action) ────────────────────────────────── */
-  --saffron: #FF9933;
+  /* ── Brand — Royal Blue (primary action) ────────────────────────────────── */
+  /* Variable name kept as --saffron for backward compat with all Tailwind
+     classes (bg-saffron, text-saffron, etc.) — only the VALUE changed from
+     saffron orange #FF9933 to royal blue #2563EB per the Lordsbook rebrand. */
+  --saffron: #2563EB;
   --saffron-foreground: #FFFFFF;
-  --saffron-soft: rgba(255, 153, 51, 0.12);
+  --saffron-soft: rgba(37, 99, 235, 0.12);
 
-  /* ── India Green (secondary action / success) ────────────────────────── */
-  --india-green: #20C875;
-  --india-green-foreground: #FFFFFF;
-  --india-green-soft: rgba(32, 200, 117, 0.12);
+  /* ── Gold (secondary action / success) ─────────────────────────────────── */
+  /* Variable name kept as --india-green for backward compat — VALUE changed
+     from green #20C875 to gold #F59E0B per the Lordsbook rebrand. */
+  --india-green: #F59E0B;
+  --india-green-foreground: #061A2F;
+  --india-green-soft: rgba(245, 158, 11, 0.14);
 
-  /* ── Navy Blue (headings, nav text, logo) ─────────────────────────────── */
+  /* ── Light Blue (headings, nav text, logo accents) ──────────────────────── */
   --navy: #93C5FD;
   --navy-foreground: #061A2F;
   --navy-soft: rgba(147, 197, 253, 0.12);
@@ -141,13 +147,15 @@
   --popover: oklch(0.20 0.012 260);
   --popover-foreground: oklch(0.95 0.005 85);
 
-  --saffron: #FF9933;
+  /* ── Brand — Royal Blue (Lordsbook rebrand) ──────────────────────────── */
+  --saffron: #2563EB;
   --saffron-foreground: oklch(0.15 0.01 260);
-  --saffron-soft: oklch(0.28 0.04 60);
+  --saffron-soft: oklch(0.28 0.06 260);
 
-  --india-green: #138808;
+  /* ── Gold (Lordsbook rebrand) ────────────────────────────────────────── */
+  --india-green: #F59E0B;
   --india-green-foreground: oklch(0.15 0.01 260);
-  --india-green-soft: oklch(0.25 0.04 145);
+  --india-green-soft: oklch(0.30 0.06 75);
 
   --navy: #4A4AB8;
   --navy-foreground: oklch(0.15 0.01 260);

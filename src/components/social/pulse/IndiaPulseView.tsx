@@ -98,14 +98,14 @@ function PulseHeader({
             <Activity className="h-5 w-5" />
           </span>
           <div>
-            <h1 className="text-base font-bold leading-tight text-white">India Pulse</h1>
+            <h1 className="text-base font-bold leading-tight text-white">Faith Pulse</h1>
             <p className="text-[11px] text-muted-foreground">
               Trending discussions, regional conversations, and community signal.
             </p>
           </div>
         </div>
       </div>
-      <div role="tablist" aria-label="India Pulse sections" className="mt-2 flex">
+      <div role="tablist" aria-label="Faith Pulse sections" className="mt-2 flex">
         {TABS.map(({ key, label, icon: Icon }) => {
           const active = pulseTab === key;
           return (
@@ -258,7 +258,7 @@ function UserStoriesPanel() {
           </li>
           <li className="flex gap-2">
             <span className="text-saffron">•</span>
-            <span>Stories are public — anyone visiting India Pulse can view them.</span>
+            <span>Stories are public — anyone visiting Faith Pulse can view them.</span>
           </li>
           <li className="flex gap-2">
             <span className="text-saffron">•</span>
@@ -362,10 +362,10 @@ function PulseAboutPanel() {
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="flex items-center gap-2 text-base font-semibold text-white">
           <Activity className="h-5 w-5 text-saffron" />
-          What is India Pulse?
+          What is Faith Pulse?
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-white/80">
-          India Pulse surfaces trending discussions and community stories from across the platform.
+          Faith Pulse surfaces trending discussions and community stories from across the platform.
           It uses real post data — no invented trends.
         </p>
       </section>
@@ -415,7 +415,7 @@ function PulseAboutPanel() {
 
       <section className="rounded-2xl border border-amber-200/30 bg-amber-50/5 p-4">
         <p className="text-sm text-amber-200/80">
-          <span className="font-semibold">Note:</span> India Pulse trending and regional posts
+          <span className="font-semibold">Note:</span> Faith Pulse trending and regional posts
           use real platform data. Stories are manually curated by administrators.
           This is not an automated news verification system.
         </p>

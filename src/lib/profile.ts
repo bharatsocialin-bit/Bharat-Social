@@ -52,11 +52,17 @@ export const RESERVED_USERNAMES = new Set([
   'bharatsocial',
   'bharat_social',
   'bharatsocialin',
-  // Current brand variants — reserved to prevent impersonation.
+  // Previous brand variant (Lordsbook rebrand 2026-11 — was Desily before).
   'desily',
   'desilyofficial',
   'desily_in',
   'desilyapp',
+  // Current brand variants — reserved to prevent impersonation.
+  'lordsbook',
+  'lordsbookofficial',
+  'lords_book',
+  'lordsbookapp',
+  'lordsbookfaith',
   'api',
   'system',
   'staff',
@@ -212,8 +218,8 @@ export function validateGender(raw: unknown): { ok: boolean; value: string | nul
 // ── Date of birth / minimum-age policy ─────────────────────────────────────
 
 /**
- * Minimum age required by the platform's age policy. Desily is a
- * general-audience community for India; accounts require a minimum age of
+ * Minimum age required by the platform's age policy. Lordsbook is a
+ * general-audience Christian community; accounts require a minimum age of
  * 13 (aligned with mainstream Indian platforms). Raise this constant if
  * the policy changes.
  */
@@ -273,7 +279,7 @@ export function validateDateOfBirth(raw: unknown): DobValidation {
       ok: false,
       date: null,
       error:
-        `Desily requires a minimum age of ${MIN_AGE_YEARS}. ` +
+        `Lordsbook requires a minimum age of ${MIN_AGE_YEARS}. ` +
         'You cannot register with this date of birth.',
     };
   }

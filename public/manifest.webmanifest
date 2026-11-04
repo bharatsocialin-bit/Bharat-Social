@@ -1,14 +1,14 @@
 {
-  "name": "Desily — One India. Every Voice.",
-  "short_name": "Desily",
-  "description": "A modern social space for people across India. Share short posts, follow what you love, and stay close to your communities — in English, हिन्दी, తెలుగు and more.",
+  "name": "Lordsbook — Christian Social Network",
+  "short_name": "Lordsbook",
+  "description": "A Christian social network with faith reels, Bible teachings, and scripture devotionals. Grow in faith daily with the Lordsbook community.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFFDF7",
-  "theme_color": "#0B2545",
+  "background_color": "#061A2F",
+  "theme_color": "#2563EB",
   "orientation": "portrait-primary",
-  "categories": ["social", "communication", "news"],
-  "lang": "en-IN",
+  "categories": ["social", "lifestyle", "books", "education"],
+  "lang": "en",
   "icons": [
     {
       "src": "/favicon-32.png",
@@ -17,19 +17,19 @@
       "purpose": "any"
     },
     {
-      "src": "/desily-icon-192.png",
+      "src": "/lordsbook-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/desily-icon-512.png",
+      "src": "/lordsbook-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/desily-icon-512.png",
+      "src": "/lordsbook-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

@@ -12,7 +12,7 @@ export const DEMO_USERS: DemoUser[] = [
     handle: 'you',
     initials: 'Yo',
     avatarGradient: 'from-sky-500 to-indigo-500',
-    bio: 'Exploring Desily — a fresh place to share what matters.',
+    bio: 'Walking in faith with Lordsbook — growing daily in the Word.',
     location: 'Bengaluru, India',
     verified: false,
     followers: 128,

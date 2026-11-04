@@ -51,7 +51,7 @@ export function AuthDialog({ open, onOpenChange, mode, onSuccess }: AuthDialogPr
             'Account created! Please check your email and confirm your address, then log in.',
           );
         }
-        toast({ title: 'Account created!', description: 'Welcome to Desily.' });
+        toast({ title: 'Account created!', description: 'Welcome to Lordsbook.' });
       }
 
       // Login (after register or directly)
@@ -66,7 +66,7 @@ export function AuthDialog({ open, onOpenChange, mode, onSuccess }: AuthDialogPr
       }
 
       toast({
-        title: isRegister ? 'Welcome to Desily!' : 'Welcome back!',
+        title: isRegister ? 'Welcome to Lordsbook!' : 'Welcome back!',
         description: 'You are now logged in.',
       });
 
@@ -101,16 +101,16 @@ export function AuthDialog({ open, onOpenChange, mode, onSuccess }: AuthDialogPr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md border-border bg-card p-0 sm:rounded-2xl">
         <DialogTitle className="sr-only">
-          {isRegister ? 'Create your account' : 'Log in to Desily'}
+          {isRegister ? 'Create your account' : 'Log in to Lordsbook'}
         </DialogTitle>
         <DialogDescription className="sr-only">
-          {isRegister ? 'Sign up for a Desily account' : 'Enter your credentials to log in'}
+          {isRegister ? 'Sign up for a Lordsbook account' : 'Enter your credentials to log in'}
         </DialogDescription>
 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 className="text-lg font-bold text-white">
-            {isRegister ? 'Join Desily' : 'Log In'}
+            {isRegister ? 'Join Lordsbook' : 'Log In'}
           </h2>
           <button
             type="button"

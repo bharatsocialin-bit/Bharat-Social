@@ -1,4 +1,4 @@
-// Core type definitions for the Desily prototype.
+// Core type definitions for the Lordsbook prototype.
 // All types here describe DEMONSTRATION data only — no real backend is involved.
 
 /**

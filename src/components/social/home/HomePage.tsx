@@ -79,8 +79,8 @@ export function HomePage() {
         <div className="grid grid-cols-4 gap-2">
           <FeatureChip
             icon={Activity}
-            label="India Pulse"
-            sublabel="Local talks"
+            label="Faith Pulse"
+            sublabel="Devotionals"
             iconBg="bg-india-green"
             onClick={() => setActiveNav('pulse')}
           />
@@ -93,8 +93,8 @@ export function HomePage() {
           />
           <FeatureChip
             icon={Brain}
-            label="India Quiz"
-            sublabel="Play & learn"
+            label="Bible Quiz"
+            sublabel="Grow & learn"
             iconBg="bg-navy"
             onClick={() => setActiveNav('quiz')}
           />
@@ -203,13 +203,13 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ── E. India Pulse highlights ────────────────────────────────────── */}
+      {/* ── E. Faith Pulse highlights ──────────────────────────────────── */}
       <section className="border-b border-border p-4">
         <SectionHeader
           icon={Activity}
           iconColor="text-india-green"
-          title="India Pulse"
-          subtitle={`Local conversations from ${currentCity.name}`}
+          title="Faith Pulse"
+          subtitle={`Devotionals and community from ${currentCity.name}`}
           onSeeAll={() => setActiveNav('pulse')}
         />
         {/* City selector chips */}
@@ -269,7 +269,7 @@ export function HomePage() {
           icon={Film}
           iconColor="text-saffron"
           title="Popular Shorts"
-          subtitle="Vertical videos from across India"
+          subtitle="Vertical videos from the faith community"
           onSeeAll={() => setActiveNav('shorts')}
         />
         <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
@@ -312,13 +312,13 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ── India Quiz shortcut ───────────────────────────────────────────── */}
+      {/* ── Bible Quiz shortcut ─────────────────────────────────────────── */}
       <section className="border-b border-border p-4">
         <SectionHeader
           icon={Brain}
           iconColor="text-white"
-          title="India Quiz"
-          subtitle="Test your knowledge across 9 categories"
+          title="Bible Quiz"
+          subtitle="Test your knowledge of scripture"
           onSeeAll={() => setActiveNav('quiz')}
         />
         <button
@@ -392,7 +392,7 @@ export function HomePage() {
         <SectionHeader
           icon={TrendingUp}
           iconColor="text-saffron"
-          title="Trending in India"
+          title="Trending in the community"
           onSeeAll={() => setActiveNav('explore')}
         />
         <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
@@ -511,7 +511,7 @@ export function HomePage() {
           <div className="h-full bg-tricolor-horizontal opacity-50" />
         </div>
         <p className="text-center text-xs text-muted-foreground">
-          Desily — A social space for everyone across India. Demonstration prototype.
+          Lordsbook — A Christian social network for faith, community, and the Word. Demonstration prototype.
         </p>
       </div>
     </div>
@@ -596,7 +596,7 @@ function HeroBanner({ setActiveNav }: { setActiveNav: (nav: NavKey) => void }) {
   return (
     <section
       className="relative overflow-hidden"
-      aria-label="Desily hero"
+      aria-label="Lordsbook hero"
     >
       {/* ── Full-bleed sunset + glowing India map background ── */}
       <div
@@ -641,9 +641,9 @@ function HeroBanner({ setActiveNav }: { setActiveNav: (nav: NavKey) => void }) {
 
           {/* Headline — wraps to 2-3 lines */}
           <h1 className="text-2xl font-bold leading-[1.15] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)] sm:text-3xl lg:text-[2.25rem] lg:leading-[1.1]">
-            Our India. Our Future.<br />
+            Walk in faith.<br />
             <span className="bg-gradient-to-r from-saffron via-amber-400 to-saffron bg-clip-text text-transparent">
-              Our Voice.
+              Grow daily.
             </span>
           </h1>
 
@@ -669,7 +669,7 @@ function HeroBanner({ setActiveNav }: { setActiveNav: (nav: NavKey) => void }) {
               className="inline-flex items-center gap-2 rounded-full border border-india-green/50 bg-white/5 px-6 py-3 text-sm font-semibold text-india-green backdrop-blur-sm transition-all hover:bg-india-green/10 hover:border-india-green active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-india-green/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#061426]"
             >
               <Activity className="h-4 w-4" />
-              Explore India Pulse
+              Explore Faith Pulse
             </button>
           </div>
         </div>
@@ -681,7 +681,7 @@ function HeroBanner({ setActiveNav }: { setActiveNav: (nav: NavKey) => void }) {
             style={{ background: 'rgba(15, 23, 42, 0.75)' }}
           >
             <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/50">
-              Why Desily
+              Why Lordsbook
             </h2>
             <ul className="space-y-3.5">
               {HERO_BENEFITS.map(({ label, icon: Icon }) => (

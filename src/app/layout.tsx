@@ -30,39 +30,43 @@ const notoSans = Noto_Sans({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Branding note (rebrand 2026-10):
-//   Public-facing brand is "Desily — One India. Every Voice."
-//   The deployed domain is NOT changed here. The canonical production URL
-//   remains the existing Vercel deployment until the user confirms the new
-//   domain. See REBRANDING.md (and the report accompanying this commit) for
-//   the full domain-update checklist.
+// Branding note (rebrand 2026-11):
+//   Public-facing brand is "Lordsbook" — a Christian social network with
+//   faith reels, Bible teachings, and scripture devotionals designed to
+//   help you grow in faith daily. Legacy brand names (BharatSocial, Desily)
+//   are preserved only as defensive reserved usernames + internal code
+//   comments. The deployed domain is NOT changed here. The canonical
+//   production URL remains the existing Vercel deployment until the user
+//   confirms the new domain. See REBRANDING.md for the full domain-update
+//   checklist.
 //
-//   DO NOT introduce a hardcoded `https://desily.in` (or any other) URL
+//   DO NOT introduce a hardcoded `https://lordsbook.com` (or any other) URL
 //   until the user confirms the secured domain.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const metadata: Metadata = {
-  title: "Desily — One India. Every Voice.",
+  title: "Lordsbook — Christian Social Network",
   description:
-    "Desily is a modern social space for people across India. Share short posts, follow what you love, and stay close to your communities — in English, हिन्दी, తెలుగు and more.",
+    "Lordsbook is a Christian social network with faith reels, Bible teachings, and scripture devotionals designed to help you grow in faith daily through scripture, community, and the Word.",
   keywords: [
-    "Desily",
-    "social media India",
-    "Indian social network",
-    "short posts",
-    "Hindi",
-    "Telugu",
-    "India",
-    "One India Every Voice",
+    "Lordsbook",
+    "Christian social network",
+    "faith community",
+    "Bible teachings",
+    "scripture devotionals",
+    "faith reels",
+    "daily devotional",
+    "Christian fellowship",
+    "grow in faith",
   ],
-  authors: [{ name: "Desily" }],
-  applicationName: "Desily",
+  authors: [{ name: "Lordsbook" }],
+  applicationName: "Lordsbook",
   icons: {
     icon: [
       { url: '/favicon-32.png', type: 'image/png', sizes: '32x32' },
       { url: '/favicon-16.png', type: 'image/png', sizes: '16x16' },
-      { url: '/desily-icon-192.png', type: 'image/png', sizes: '192x192' },
-      { url: '/desily-icon-512.png', type: 'image/png', sizes: '512x512' },
+      { url: '/lordsbook-icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/lordsbook-icon-512.png', type: 'image/png', sizes: '512x512' },
     ],
     apple: [
       { url: '/apple-touch-icon.png', sizes: '180x180' },
@@ -71,34 +75,32 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "Desily — One India. Every Voice.",
-    description: "A modern social space for people across India. One India. Every Voice.",
-    siteName: "Desily",
+    title: "Lordsbook — Christian Social Network",
+    description: "Faith reels, Bible teachings, and scripture devotionals. Grow in faith daily with the Lordsbook community.",
+    siteName: "Lordsbook",
     type: "website",
     // NOTE: `url` deliberately omitted — the canonical domain is not yet
-    // confirmed. Open Graph consumers will fall back to the request URL,
-    // which is correct for both the Vercel preview domain and any future
-    // custom domain.
+    // confirmed. Open Graph consumers will fall back to the request URL.
     images: [
       {
-        url: "/desily-logo.png",
-        width: 2172,
-        height: 724,
-        alt: "Desily — One India. Every Voice.",
+        url: "/lordsbook-logo.png",
+        width: 1254,
+        height: 1254,
+        alt: "Lordsbook",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Desily — One India. Every Voice.",
-    description: "A modern social space for people across India. One India. Every Voice.",
-    images: ["/desily-logo.png"],
+    title: "Lordsbook — Christian Social Network",
+    description: "Faith reels, Bible teachings, and scripture devotionals. Grow in faith daily with the Lordsbook community.",
+    images: ["/lordsbook-logo.png"],
   },
 };
 
 export const viewport: Viewport = {
-  // Brand navy — matches the favicon background and the PWA manifest theme.
-  themeColor: "#0B2545",
+  // Brand royal blue — matches the Lordsbook shield border + PWA manifest theme.
+  themeColor: "#2563EB",
   width: "device-width",
   initialScale: 1,
   // Respect iOS safe areas so the mobile bottom nav doesn't get clipped.
