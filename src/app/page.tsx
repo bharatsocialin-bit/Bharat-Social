@@ -17,6 +17,7 @@ import { QuizView } from '@/components/social/quiz/QuizView';
 import { HomePage } from '@/components/social/home/HomePage';
 import { AdminPanel } from '@/components/social/admin/AdminPanel';
 import { ComposeDialog } from '@/components/social/ComposeDialog';
+import { ComingSoon } from '@/components/social/ComingSoon';
 import type { PostComposerHandle } from '@/components/social/PostComposer';
 
 export default function Home() {
@@ -44,6 +45,36 @@ export default function Home() {
   const showQuiz = activeNav === 'quiz';
   const showHome = activeNav === 'home';
   const showAdmin = activeNav === 'admin';
+  // Coming Soon features — nav items that don't have full implementations yet.
+  const showComingSoon =
+    activeNav === 'bible' ||
+    activeNav === 'comic-bible' ||
+    activeNav === 'groups' ||
+    activeNav === 'churches' ||
+    activeNav === 'marketplace';
+
+  const comingSoonConfig: Record<string, { feature: string; description: string }> = {
+    bible: {
+      feature: 'Bible',
+      description: 'Read, study, and bookmark Scripture. Full Bible text with search, daily reading plans, and devotionals — coming soon to Lordsbook.',
+    },
+    'comic-bible': {
+      feature: 'Comic Bible',
+      description: 'Experience the Bible in visual stories. Beautifully illustrated comic-style Bible narratives for all ages — coming soon to Lordsbook.',
+    },
+    groups: {
+      feature: 'Groups',
+      description: 'Join fellowship groups, Bible study circles, and prayer communities. Connect with believers who share your passion — coming soon to Lordsbook.',
+    },
+    churches: {
+      feature: 'Churches',
+      description: 'Find and connect with churches near you. Discover service times, events, and communities of faith — coming soon to Lordsbook.',
+    },
+    marketplace: {
+      feature: 'Marketplace',
+      description: 'Explore Christian products — books, music, apparel, and more. A trusted marketplace for the faith community — coming soon to Lordsbook.',
+    },
+  };
 
   // Shorts takes over the full viewport — no sidebar, no max-width constraint.
   if (showShorts) {
@@ -88,6 +119,11 @@ export default function Home() {
               <Feed composerRef={composerRef} />
             ) : showAdmin ? (
               <AdminPanel />
+            ) : showComingSoon ? (
+              <ComingSoon
+                feature={comingSoonConfig[activeNav]?.feature ?? 'Feature'}
+                description={comingSoonConfig[activeNav]?.description}
+              />
             ) : showHome ? (
               <HomePage />
             ) : (

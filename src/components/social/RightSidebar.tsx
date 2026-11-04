@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, TrendingUp, BadgeCheck, MoreHorizontal, X, Activity, Loader2 } from 'lucide-react';
+import { Search, TrendingUp, BadgeCheck, MoreHorizontal, X, Activity, Loader2, BookOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useSocialStore } from '@/store/useSocialStore';
@@ -131,12 +131,36 @@ export function RightSidebar() {
         </section>
       )}
 
-      {/* India Pulse city updates */}
+      {/* Faith Pulse widget */}
+      {/* Daily Verse widget */}
+      <section className="overflow-hidden rounded-2xl border border-saffron/30 bg-gradient-to-br from-saffron-soft/30 to-card shadow-soft">
+        <header className="flex items-center justify-between px-4 pt-4">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-white">
+            <BookOpen className="h-4 w-4 text-saffron" />
+            Daily Verse
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            {new Date().toLocaleDateString('en', { month: 'short', day: 'numeric' })}
+          </span>
+        </header>
+        <div className="px-4 pb-4 pt-3">
+          <p className="text-sm italic leading-relaxed text-white/90">
+            &ldquo;Be strong and courageous. Do not be afraid; do not be
+            discouraged, for the LORD your God will be with you wherever you
+            go.&rdquo;
+          </p>
+          <p className="mt-2 text-xs font-semibold text-saffron">
+            — Joshua 1:9
+          </p>
+        </div>
+      </section>
+
+      {/* Faith Pulse widget */}
       <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
         <header className="flex items-center justify-between px-4 pt-4">
           <h2 className="flex items-center gap-2 text-base font-bold text-white">
             <Activity className="h-4 w-4 text-india-green" />
-            India Pulse
+            Faith Pulse
           </h2>
           <button
             type="button"
@@ -148,14 +172,14 @@ export function RightSidebar() {
         </header>
         <div className="px-4 pb-3 pt-2">
           <p className="text-xs text-muted-foreground">
-            Local conversations from cities across India
+            Trending faith conversations and community stories
           </p>
           <button
             type="button"
             onClick={() => setActiveNav('pulse')}
             className="mt-2 w-full rounded-lg bg-india-green-soft px-3 py-2 text-left text-sm font-medium text-india-green transition-colors hover:bg-india-green hover:text-white"
           >
-            Explore city updates →
+            Explore faith updates →
           </button>
         </div>
       </section>
@@ -165,7 +189,7 @@ export function RightSidebar() {
         <header className="flex items-center justify-between px-4 pt-4">
           <h2 className="flex items-center gap-2 text-base font-bold text-white">
             <TrendingUp className="h-4 w-4 text-saffron" />
-            Trending in India
+            Trending in Lordsbook
           </h2>
           <button
             type="button"

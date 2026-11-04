@@ -16,6 +16,11 @@ import {
   Image as ImageIcon,
   Smile,
   BarChart3,
+  BookOpen,
+  BookImage,
+  Church,
+  ShoppingBag,
+  Heart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSocialStore } from '@/store/useSocialStore';
@@ -74,36 +79,50 @@ export function HomePage() {
       {/* ── A. Hero / Welcome Banner — Dark Modern Gradient ──────────────── */}
       <HeroBanner setActiveNav={setActiveNav} />
 
-      {/* ── B. Feature Shortcuts — 4 colorful chips ───────────────────────── */}
+      {/* ── B. Feature Shortcuts — 6 cards matching Lordsbook reference ────── */}
       <section className="border-b border-border bg-card p-4">
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           <FeatureChip
-            icon={Activity}
-            label="Faith Pulse"
-            sublabel="Devotionals"
-            iconBg="bg-india-green"
-            onClick={() => setActiveNav('pulse')}
+            icon={BookOpen}
+            label="Bible"
+            sublabel="Read & Study"
+            iconBg="bg-navy"
+            onClick={() => setActiveNav('bible')}
           />
           <FeatureChip
-            icon={Film}
-            label="Shorts"
-            sublabel="Watch & create"
+            icon={BookImage}
+            label="Comic Bible"
+            sublabel="Visual Stories"
             iconBg="bg-saffron"
-            onClick={() => setActiveNav('shorts')}
+            onClick={() => setActiveNav('comic-bible')}
           />
           <FeatureChip
             icon={Brain}
-            label="Bible Quiz"
-            sublabel="Grow & learn"
-            iconBg="bg-navy"
+            label="Bible Trivia"
+            sublabel="Play & Grow"
+            iconBg="bg-india-green"
             onClick={() => setActiveNav('quiz')}
           />
           <FeatureChip
-            icon={Compass}
-            label="Explore"
-            sublabel="Discover"
+            icon={Users}
+            label="Groups"
+            sublabel="Fellowship"
+            iconBg="bg-navy"
+            onClick={() => setActiveNav('groups')}
+          />
+          <FeatureChip
+            icon={Church}
+            label="Churches"
+            sublabel="Find & Connect"
             iconBg="bg-saffron"
-            onClick={() => setActiveNav('explore')}
+            onClick={() => setActiveNav('churches')}
+          />
+          <FeatureChip
+            icon={ShoppingBag}
+            label="Marketplace"
+            sublabel="Christian Products"
+            iconBg="bg-india-green"
+            onClick={() => setActiveNav('marketplace')}
           />
         </div>
       </section>
@@ -317,7 +336,7 @@ export function HomePage() {
         <SectionHeader
           icon={Brain}
           iconColor="text-white"
-          title="Bible Quiz"
+          title="Bible Trivia"
           subtitle="Test your knowledge of scripture"
           onSeeAll={() => setActiveNav('quiz')}
         />
@@ -586,10 +605,11 @@ function SectionHeader({
 // ─────────────────────────────────────────────────────────────────────────────
 
 const HERO_BENEFITS = [
-  { label: 'Connect across India', icon: Users },
-  { label: 'Discuss what matters', icon: Activity },
-  { label: 'Discover opportunities', icon: Compass },
-  { label: 'Grow together', icon: Sparkles },
+  { label: 'Read the Bible', icon: BookOpen },
+  { label: 'Join Groups & Fellowships', icon: Users },
+  { label: 'Share Prayer Requests', icon: Heart },
+  { label: 'Watch Christian Shorts', icon: Film },
+  { label: 'Explore Christian Marketplace', icon: ShoppingBag },
 ];
 
 function HeroBanner({ setActiveNav }: { setActiveNav: (nav: NavKey) => void }) {
@@ -598,13 +618,13 @@ function HeroBanner({ setActiveNav }: { setActiveNav: (nav: NavKey) => void }) {
       className="relative overflow-hidden"
       aria-label="Lordsbook hero"
     >
-      {/* ── Full-bleed sunset + glowing India map background ── */}
+      {/* ── Full-bleed cross + sunrise background ── */}
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: 'url(/india-sunset-hero.png)',
+          backgroundImage: 'url(/hero-cross-sunrise.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center 30%',
+          backgroundPosition: 'center 40%',
           backgroundRepeat: 'no-repeat',
         }}
         aria-hidden
@@ -641,16 +661,16 @@ function HeroBanner({ setActiveNav }: { setActiveNav: (nav: NavKey) => void }) {
 
           {/* Headline — wraps to 2-3 lines */}
           <h1 className="text-2xl font-bold leading-[1.15] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)] sm:text-3xl lg:text-[2.25rem] lg:leading-[1.1]">
-            Walk in faith.<br />
+            Faith. Fellowship.{' '}
             <span className="bg-gradient-to-r from-saffron via-amber-400 to-saffron bg-clip-text text-transparent">
-              Grow daily.
+              Community.
             </span>
           </h1>
 
           {/* Supporting text */}
           <p className="mt-3 max-w-md text-sm leading-relaxed drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)] sm:text-base" style={{ color: '#D1D5DB' }}>
-            People. Perspectives. Possibilities. A social platform for a
-            stronger, more connected India.
+            A Christian social platform to Read, Learn, Share, Pray, Connect
+            and Grow in Christ.
           </p>
 
           {/* Buttons */}
@@ -665,11 +685,11 @@ function HeroBanner({ setActiveNav }: { setActiveNav: (nav: NavKey) => void }) {
             </button>
             <button
               type="button"
-              onClick={() => setActiveNav('pulse')}
+              onClick={() => setActiveNav('bible')}
               className="inline-flex items-center gap-2 rounded-full border border-india-green/50 bg-white/5 px-6 py-3 text-sm font-semibold text-india-green backdrop-blur-sm transition-all hover:bg-india-green/10 hover:border-india-green active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-india-green/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#061426]"
             >
-              <Activity className="h-4 w-4" />
-              Explore Faith Pulse
+              <BookOpen className="h-4 w-4" />
+              Read the Bible
             </button>
           </div>
         </div>
@@ -681,7 +701,7 @@ function HeroBanner({ setActiveNav }: { setActiveNav: (nav: NavKey) => void }) {
             style={{ background: 'rgba(15, 23, 42, 0.75)' }}
           >
             <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/50">
-              Why Lordsbook
+              What You Can Do
             </h2>
             <ul className="space-y-3.5">
               {HERO_BENEFITS.map(({ label, icon: Icon }) => (

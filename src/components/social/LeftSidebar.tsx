@@ -15,6 +15,11 @@ import {
   Feather,
   LogIn,
   ShieldCheck,
+  BookOpen,
+  BookImage,
+  Users,
+  Church,
+  ShoppingBag,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
@@ -35,11 +40,15 @@ interface NavItemDef {
 
 const NAV_ITEMS: NavItemDef[] = [
   { key: 'home', label: 'Home', icon: Home },
-  { key: 'pulse', label: 'India Pulse', icon: Activity },
+  { key: 'bible', label: 'Bible', icon: BookOpen },
+  { key: 'comic-bible', label: 'Comic Bible', icon: BookImage },
   { key: 'feed', label: 'Feed', icon: Rss },
   { key: 'shorts', label: 'Shorts', icon: Film },
-  { key: 'quiz', label: 'India Quiz', icon: Brain },
+  { key: 'quiz', label: 'Bible Trivia', icon: Brain },
   { key: 'explore', label: 'Explore', icon: Compass },
+  { key: 'groups', label: 'Groups', icon: Users },
+  { key: 'churches', label: 'Churches', icon: Church },
+  { key: 'marketplace', label: 'Marketplace', icon: ShoppingBag },
   { key: 'notifications', label: 'Notifications', icon: Bell },
   { key: 'messages', label: 'Messages', icon: Mail },
   { key: 'bookmarks', label: 'Bookmarks', icon: Bookmark },

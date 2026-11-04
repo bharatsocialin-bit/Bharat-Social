@@ -15,11 +15,16 @@ export function MobileHeader({ onCompose }: MobileHeaderProps) {
 
   const titles: Record<string, string> = {
     home: 'Lordsbook',
+    bible: 'Bible',
+    'comic-bible': 'Comic Bible',
     explore: 'Explore',
     pulse: 'Faith Pulse',
     feed: 'Feed',
-    shorts: 'Faith Reels',
-    quiz: 'Bible Quiz',
+    shorts: 'Shorts',
+    quiz: 'Bible Trivia',
+    groups: 'Groups',
+    churches: 'Churches',
+    marketplace: 'Marketplace',
     notifications: 'Notifications',
     messages: 'Messages',
     bookmarks: 'Bookmarks',

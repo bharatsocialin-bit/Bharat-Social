@@ -118,11 +118,16 @@ export interface SuggestedAccount {
 
 export type NavKey =
   | 'home'
-  | 'explore'
-  | 'pulse'
+  | 'bible'
+  | 'comic-bible'
   | 'feed'
   | 'shorts'
   | 'quiz'
+  | 'explore'
+  | 'pulse'
+  | 'groups'
+  | 'churches'
+  | 'marketplace'
   | 'notifications'
   | 'messages'
   | 'bookmarks'
