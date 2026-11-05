@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, X } from 'lucide-react';
+import { LogoSquare } from '@/components/social/Logo';
 
 interface AuthDialogProps {
   open: boolean;
@@ -107,19 +108,22 @@ export function AuthDialog({ open, onOpenChange, mode, onSuccess }: AuthDialogPr
           {isRegister ? 'Sign up for a Lordsbook account' : 'Enter your credentials to log in'}
         </DialogDescription>
 
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="text-lg font-bold text-white">
-            {isRegister ? 'Join Lordsbook' : 'Log In'}
-          </h2>
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" />
-          </button>
+        {/* Logo + Header */}
+        <div className="flex flex-col items-center gap-3 border-b border-border px-5 py-5">
+          <LogoSquare className="h-20 w-20" />
+          <div className="flex items-center justify-between w-full">
+            <h2 className="text-lg font-bold text-white">
+              {isRegister ? 'Join Lordsbook' : 'Log In'}
+            </h2>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {/* Form */}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSocialStore } from '@/store/useSocialStore';
 import { validateUsername, USERNAME_REGEX } from '@/lib/profile';
 import type { OwnProfile } from '@/lib/types';
+import { LogoSquare } from '@/components/social/Logo';
 import {
   ProfileOptionalFields,
   emptyProfileForm,
@@ -164,8 +165,8 @@ export function OnboardingView({ profile, onComplete }: OnboardingViewProps) {
       <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col px-4 py-8 sm:justify-center">
         {/* Header */}
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand/70 text-white shadow-md">
-            <Sparkles className="h-6 w-6" aria-hidden />
+          <div className="mb-4 flex justify-center">
+            <LogoSquare className="h-24 w-24" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Complete your profile

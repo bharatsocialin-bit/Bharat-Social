@@ -1,7 +1,8 @@
 'use client';
 
-import { Construction, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useSocialStore } from '@/store/useSocialStore';
+import { LogoMark } from '@/components/social/Logo';
 import type { NavKey } from '@/lib/types';
 
 interface ComingSoonProps {
@@ -16,7 +17,8 @@ interface ComingSoonProps {
 
 /**
  * Placeholder view for nav items whose features are not yet built.
- * Shows a friendly "Coming Soon" message with a back button.
+ * Shows a friendly "Coming Soon" message with the Lordsbook shield logo
+ * and a back button.
  *
  * Used by: Bible, Comic Bible, Groups, Churches, Marketplace (Phase 2 features).
  */
@@ -30,9 +32,7 @@ export function ComingSoon({
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 p-8 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-saffron-soft">
-        <Construction className="h-10 w-10 text-saffron" />
-      </div>
+      <LogoMark className="h-20 w-20" />
       <div className="space-y-2">
         <h2 className="text-2xl font-bold text-white">{feature} — Coming Soon</h2>
         <p className="mx-auto max-w-md text-sm text-muted-foreground">
