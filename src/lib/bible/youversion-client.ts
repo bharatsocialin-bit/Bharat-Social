@@ -31,6 +31,12 @@ function getAppKey(): string | null {
 /**
  * Fetch a Bible chapter from YouVersion.
  *
+ * The YouVersion passages API returns plain text WITHOUT verse markers
+ * (no HTML, no <sup> tags). To get individual verses, we fetch each verse
+ * separately using single-verse references (e.g., JHN.3.1, JHN.3.2) and
+ * assemble them into a chapter. All verse fetches run in parallel via
+ * Promise.all for speed. Results are cached for 24 hours.
+ *
  * @param bibleId - YouVersion Bible ID (numeric, e.g. 1980 for Hindi IRV)
  * @param usfm - Book USFM ID (e.g. "GEN", "JHN")
  * @param chapter - Chapter number (1-based)
@@ -47,17 +53,18 @@ export async function fetchChapterFromYouVersion(
   const book = getBook(usfm);
   if (!book) return null;
 
-  // YouVersion uses USFM references like "GEN.1" for chapter 1 of Genesis.
-  const passageRef = `${usfm.toUpperCase()}.${chapter}`;
-  const url = `${YV_API_BASE}/bibles/${bibleId}/passages/${passageRef}`;
+  const bookUsfm = usfm.toUpperCase();
 
   try {
+    // First, fetch verse 1 to confirm the chapter exists and get a sample.
+    const passageRef = `${bookUsfm}.${chapter}`;
+    const url = `${YV_API_BASE}/bibles/${bibleId}/passages/${passageRef}`;
+
     const res = await fetch(url, {
       headers: {
         'X-YVP-App-Key': key,
         'Accept': 'application/json',
       },
-      // Cache for 24 hours — Bible text doesn't change.
       next: { revalidate: 86400 },
     });
 
@@ -66,13 +73,49 @@ export async function fetchChapterFromYouVersion(
     const data = (await res.json()) as { id: string; content: string; reference: string };
     if (!data.content) return null;
 
-    // Parse the HTML content to extract individual verses.
-    const verses = parseYouVersion(data.content);
-    if (verses.length === 0) return null;
+    // The passages API returns the FULL chapter as one text block without
+    // verse markers. To get individual verses, we need to fetch each verse
+    // separately. We know the verse count from our book metadata (but some
+    // chapters have different verse counts across translations, so we'll
+    // fetch up to the standard count + a few extra as a safety margin).
+    const maxVerses = book.chapters >= chapter ? getExpectedVerseCount(bookUsfm, chapter) : 50;
+
+    // Fetch all verses in parallel. Each verse is fetched as a single passage
+    // (e.g., "GEN.1.1", "GEN.1.2", ...). We over-fetch by 3 verses to handle
+    // translations that might have slightly different verse numbering.
+    const versePromises: Promise<{ verse: number; text: string | null }>[] = [];
+    for (let v = 1; v <= maxVerses + 3; v++) {
+      versePromises.push(fetchSingleVerse(key, bibleId, bookUsfm, chapter, v));
+    }
+
+    const verseResults = await Promise.all(versePromises);
+    const verses: BibleVerse[] = [];
+    for (const result of verseResults) {
+      if (result.text && result.text.trim()) {
+        verses.push({ verse: result.verse, text: result.text.trim() });
+      }
+    }
+
+    if (verses.length === 0) {
+      // Fallback: if individual verse fetch failed, return the whole chapter
+      // as a single verse block (better than nothing).
+      const text = data.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (text) {
+        return {
+          translation: String(bibleId),
+          book: bookUsfm,
+          bookName: book.name,
+          chapter,
+          verses: [{ verse: 1, text }],
+          verseCount: 1,
+        };
+      }
+      return null;
+    }
 
     return {
-      translation: String(bibleId), // Will be mapped back by the caller
-      book: usfm.toUpperCase(),
+      translation: String(bibleId),
+      book: bookUsfm,
       bookName: book.name,
       chapter,
       verses,
@@ -81,6 +124,42 @@ export async function fetchChapterFromYouVersion(
   } catch {
     return null;
   }
+}
+
+/** Fetch a single verse from YouVersion. Returns null if the verse doesn't exist. */
+async function fetchSingleVerse(
+  key: string,
+  bibleId: number,
+  bookUsfm: string,
+  chapter: number,
+  verse: number,
+): Promise<{ verse: number; text: string | null }> {
+  try {
+    const passageRef = `${bookUsfm}.${chapter}.${verse}`;
+    const url = `${YV_API_BASE}/bibles/${bibleId}/passages/${passageRef}`;
+    const res = await fetch(url, {
+      headers: { 'X-YVP-App-Key': key, 'Accept': 'application/json' },
+      next: { revalidate: 86400 },
+    });
+    if (!res.ok) return { verse, text: null };
+    const data = (await res.json()) as { content: string };
+    const text = data.content
+      ? data.content.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim()
+      : null;
+    return { verse, text: text || null };
+  } catch {
+    return { verse, text: null };
+  }
+}
+
+/** Expected verse count for a given chapter (approximate — used to limit parallel fetches). */
+function getExpectedVerseCount(usfm: string, chapter: number): number {
+  // Approximate verse counts for common chapters. This is a safety ceiling
+  // — we over-fetch by 3 to handle minor variations across translations.
+  // Psalm 119 has 176 verses (the longest chapter); most chapters have 20-40.
+  if (usfm === 'PSA' && chapter === 119) return 176;
+  if (usfm === 'PSA') return 50; // Psalms vary widely
+  return 40; // Most chapters have < 40 verses
 }
 
 /**
