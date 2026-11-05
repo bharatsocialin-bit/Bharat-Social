@@ -80,6 +80,10 @@ model User {
   // ── India Pulse: User Stories ──
   userStories            UserStory[]
   userStoryViews         UserStoryView[]
+  // ── Bible ──
+  bibleBookmarks         BibleBookmark[]
+  bibleReadingStreak     BibleReadingStreak?
+  bibleReadingDays       BibleReadingDay[]
 
   @@index([username])
   @@index([email])
@@ -361,6 +365,60 @@ model UserStoryView {
   @@unique([storyId, viewerId]) // one view per viewer per story
   @@index([storyId])
   @@index([viewerId])
+}
+
+// ── Bible — bookmarks, reading streak, daily reading tracking ──────────────
+// Translation text is fetched live from bolls.life + bible-api.com (free,
+// no key). Only user-specific data (bookmarks, streak) is stored locally.
+
+model BibleBookmark {
+  id           String   @id @default(cuid())
+  userId       String
+  translation  String   // e.g. "KJV", "WEB", "IRVHin"
+  book         String   // e.g. "GEN", "JHN" (3-letter USFM ID)
+  bookName     String   // e.g. "Genesis", "John" (for display)
+  chapter      Int
+  verse        Int
+  // Optional note the user can attach to the bookmark.
+  note         String?
+  // The verse text at the time of bookmarking — cached so the bookmark list
+  // renders without re-fetching every verse from the API.
+  verseText    String
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, translation, book, chapter, verse])
+  @@index([userId])
+  @@index([userId, translation])
+}
+
+// Daily reading streak — one row per user, updated on each read.
+// A "read" = the user opened any Bible chapter on a given day.
+model BibleReadingStreak {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  currentStreak   Int      @default(0)
+  longestStreak   Int      @default(0)
+  lastReadDate    DateTime? // date (midnight UTC) of last read
+  totalReadDays   Int      @default(0)
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// One row per day the user read — powers the streak counter + "read today" UI.
+// Composite unique on (userId, date) prevents duplicates.
+model BibleReadingDay {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime // midnight UTC of the day read
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }
 
 // ── Shorts — short-form vertical video ────────────────────────────────────
