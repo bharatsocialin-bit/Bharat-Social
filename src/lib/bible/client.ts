@@ -15,28 +15,8 @@
 
 import { getTranslation } from './translations';
 import { getBook } from './books';
-
-export interface BibleVerse {
-  /** Verse number (1-based). */
-  verse: number;
-  /** Verse text (cleaned — no Strong's tags, no leading/trailing whitespace). */
-  text: string;
-}
-
-export interface BibleChapter {
-  /** Translation ID, e.g. "KJV". */
-  translation: string;
-  /** Book USFM ID, e.g. "GEN". */
-  book: string;
-  /** Book display name, e.g. "Genesis". */
-  bookName: string;
-  /** Chapter number (1-based). */
-  chapter: number;
-  /** Verses in order. */
-  verses: BibleVerse[];
-  /** Total verse count (convenience for "Chapter 3 · 24 verses"). */
-  verseCount: number;
-}
+import { fetchChapterFromYouVersion } from './youversion-client';
+import type { BibleVerse, BibleChapter } from './client-types';
 
 // ── bolls.life fetcher ─────────────────────────────────────────────────────
 
@@ -133,15 +113,39 @@ export async function fetchChapter(
   if (!translation || !book) return null;
   if (chapter < 1 || chapter > book.chapters) return null;
 
+  // ── Strategy 1: YouVersion (if the translation is on YouVersion + key is configured) ──
+  if (translation.source === 'youversion' && translation.youversionId) {
+    const yvData = await fetchChapterFromYouVersion(
+      translation.youversionId,
+      usfm,
+      chapter,
+    );
+    if (yvData) {
+      // Map the YouVersion response back to our standard shape.
+      return {
+        ...yvData,
+        translation: translationId,
+      };
+    }
+    // If YouVersion fails, fall through to bolls/bible-api for English.
+  }
+
+  // ── Strategy 2: bolls.life ──
   let verses: BibleVerse[] | null = null;
   if (translation.source === 'bolls') {
     verses = await fetchFromBolls(translationId, usfm, chapter);
     // If bolls fails, try bible-api.com as a fallback for English.
-    if (!verses && translation.languageCode === 'eng') {
+    if (!verses && translation.languageCode === 'en') {
       verses = await fetchFromBibleApi(translationId, usfm, chapter);
     }
-  } else {
+  } else if (translation.source === 'bible-api') {
     verses = await fetchFromBibleApi(translationId, usfm, chapter);
+  } else if (translation.source === 'youversion') {
+    // YouVersion failed above — try bolls/bible-api as last resort for English.
+    if (translation.languageCode === 'en') {
+      // Try KJV on bolls as a fallback (since the YV ID might not match bolls IDs).
+      verses = await fetchFromBolls('KJV', usfm, chapter);
+    }
   }
 
   if (!verses || verses.length === 0) return null;

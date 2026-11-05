@@ -21,58 +21,105 @@ export interface BibleTranslation {
   abbr: string;
   /** Native-language name (for Indian languages). Same as `name` for English. */
   nativeName?: string;
-  /** ISO 639-3 language code, e.g. "eng", "hin", "tam". */
+  /** ISO 639-1 language code, e.g. "en", "hi", "ta". */
   languageCode: string;
   /** English name of the language, e.g. "English", "Hindi", "Tamil". */
   languageName: string;
   /** Native script of the language name, e.g. "हिन्दी", "தமிழ்". */
   languageNative?: string;
   /** Which API serves this translation. */
-  source: 'bolls' | 'bible-api';
-  /** Source attribution label (e.g. "YouVersion" if the same text is on YV). */
+  source: 'youversion' | 'bolls' | 'bible-api';
+  /** YouVersion Bible ID (numeric, when source = 'youversion'). */
+  youversionId?: number;
+  /** Source attribution label. */
   attribution?: string;
-  /** Whether this translation is in the public domain (no copyright concern). */
+  /** Whether this translation is in the public domain. */
   publicDomain: boolean;
 }
 
 export const TRANSLATIONS: BibleTranslation[] = [
-  // ── English (verified working on bolls.life + bible-api.com) ──
-  { id: 'KJV', name: 'King James Version', abbr: 'KJV', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'Public Domain', publicDomain: true },
-  { id: 'WEB', name: 'World English Bible', abbr: 'WEB', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'Public Domain', publicDomain: true },
-  { id: 'ASV', name: 'American Standard Version', abbr: 'ASV', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'Public Domain', publicDomain: true },
-  { id: 'BBE', name: 'Bible in Basic English', abbr: 'BBE', languageCode: 'eng', languageName: 'English', source: 'bible-api', attribution: 'Public Domain', publicDomain: true },
-  { id: 'YLT', name: "Young's Literal Translation", abbr: 'YLT', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'Public Domain', publicDomain: true },
-  { id: 'LSV', name: 'Literal Standard Version', abbr: 'LSV', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'Public Domain', publicDomain: true },
-  { id: 'NET', name: 'New English Translation', abbr: 'NET', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'NET Free', publicDomain: false },
-  { id: 'ESV', name: 'English Standard Version', abbr: 'ESV', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'ESV', publicDomain: false },
-  { id: 'NLT', name: 'New Living Translation', abbr: 'NLT', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'NLT', publicDomain: false },
-  { id: 'NKJV', name: 'New King James Version', abbr: 'NKJV', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'NKJV', publicDomain: false },
-  { id: 'GNT', name: 'Good News Translation', abbr: 'GNT', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'GNT', publicDomain: false },
-  { id: 'MSG', name: 'The Message', abbr: 'MSG', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'MSG', publicDomain: false },
-  { id: 'NASB', name: 'New American Standard Bible', abbr: 'NASB', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'NASB 1995', publicDomain: false },
-  { id: 'ERV', name: 'Easy-to-Read Version', abbr: 'ERV', languageCode: 'eng', languageName: 'English', source: 'bolls', attribution: 'ERV', publicDomain: false },
-  // ── Chinese ──
-  { id: 'CUV', name: 'Chinese Union Version', abbr: 'CUV', nativeName: '和合本', languageCode: 'zho', languageName: 'Chinese', languageNative: '中文', source: 'bolls', attribution: 'Public Domain', publicDomain: true },
-  // ── Arabic ──
-  { id: 'SVD', name: 'Smith Van Dyke Arabic', abbr: 'SVD', nativeName: 'سميث واندايك', languageCode: 'ara', languageName: 'Arabic', languageNative: 'العربية', source: 'bolls', attribution: 'Public Domain', publicDomain: true },
-  // ── Spanish ──
-  { id: 'NVI', name: 'Nueva Versión Internacional', abbr: 'NVI', nativeName: 'Nueva Versión Internacional', languageCode: 'spa', languageName: 'Spanish', languageNative: 'Español', source: 'bolls', attribution: 'NVI', publicDomain: false },
-  // ── Portuguese ──
-  { id: 'OL', name: 'O Livro', abbr: 'OL', nativeName: 'O Livro', languageCode: 'por', languageName: 'Portuguese', languageNative: 'Português', source: 'bolls', attribution: 'OL', publicDomain: false },
-  // ── Russian ──
-  { id: 'SYNOD', name: 'Russian Synodal Translation', abbr: 'SYNOD', nativeName: 'Синодальный перевод', languageCode: 'rus', languageName: 'Russian', languageNative: 'Русский', source: 'bolls', attribution: 'Public Domain', publicDomain: true },
-  { id: 'BTI', name: 'Russian Bible Society Translation', abbr: 'BTI', nativeName: 'Библия РБО', languageCode: 'rus', languageName: 'Russian', languageNative: 'Русский', source: 'bolls', attribution: 'BTI', publicDomain: false },
-  // ── Hindi / Tamil / Telugu / Malayalam / Bengali ──
-  // These are NOT available on bolls.life or bible-api.com. To add them,
-  // the user needs to upload Bible text files (USFM or JSON format) which
-  // we'll import via a future self-hosted Bible data pipeline. The
-  // translation picker will show these as "Coming Soon" until the data
-  // is uploaded.
-  { id: 'IRVHin', name: 'Hindi IRV (Coming Soon)', abbr: 'IRV-Hin', nativeName: 'ईश्वर निर्वाचित वर्ण (IRV) हिन्दी', languageCode: 'hin', languageName: 'Hindi', languageNative: 'हिन्दी', source: 'bolls', attribution: 'Coming Soon', publicDomain: false },
-  { id: 'IRVTam', name: 'Tamil IRV (Coming Soon)', abbr: 'IRV-Tam', nativeName: 'IRV தமிழ்', languageCode: 'tam', languageName: 'Tamil', languageNative: 'தமிழ்', source: 'bolls', attribution: 'Coming Soon', publicDomain: false },
-  { id: 'IRVTel', name: 'Telugu IRV (Coming Soon)', abbr: 'IRV-Tel', nativeName: 'IRV తెలుగు', languageCode: 'tel', languageName: 'Telugu', languageNative: 'తెలుగు', source: 'bolls', attribution: 'Coming Soon', publicDomain: false },
-  { id: 'IRVMal', name: 'Malayalam IRV (Coming Soon)', abbr: 'IRV-Mal', nativeName: 'IRV മലയാളം', languageCode: 'mal', languageName: 'Malayalam', languageNative: 'മലയാളം', source: 'bolls', attribution: 'Coming Soon', publicDomain: false },
-  { id: 'BLB', name: 'Bengali Living Bible (Coming Soon)', abbr: 'BLB', nativeName: 'বাংলা লিভিং বাইবল', languageCode: 'ben', languageName: 'Bengali', languageNative: 'বাংলা', source: 'bolls', attribution: 'Coming Soon', publicDomain: false },
+  // ── English — YouVersion (primary, requires YOUVERSION_APP_KEY) ──
+  { id: 'YV-BSB', name: 'Berean Standard Bible', abbr: 'BSB', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 3034, attribution: 'YouVersion', publicDomain: true },
+  { id: 'YV-AMP', name: 'Amplified Bible', abbr: 'AMP', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 1588, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-NIV', name: 'New International Version', abbr: 'NIV', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 111, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-NASB', name: 'New American Standard Bible 1995', abbr: 'NASB', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 100, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-NIrV', name: "New International Reader's Version", abbr: 'NIrV', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 110, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-LSV', name: 'Literal Standard Version', abbr: 'LSV', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 2660, attribution: 'YouVersion', publicDomain: true },
+  { id: 'YV-WMB', name: 'World Messianic Bible', abbr: 'WMB', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 1209, attribution: 'YouVersion', publicDomain: true },
+  { id: 'YV-ASV', name: 'American Standard Version', abbr: 'ASV', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 12, attribution: 'YouVersion', publicDomain: true },
+  { id: 'YV-CPDV', name: 'Catholic Public Domain Version', abbr: 'CPDV', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 42, attribution: 'YouVersion', publicDomain: true },
+
+  // ── English — bolls.life / bible-api.com (fallback, no key needed) ──
+  { id: 'KJV', name: 'King James Version', abbr: 'KJV', languageCode: 'en', languageName: 'English', source: 'bolls', attribution: 'Public Domain', publicDomain: true },
+  { id: 'WEB', name: 'World English Bible', abbr: 'WEB', languageCode: 'en', languageName: 'English', source: 'bolls', attribution: 'Public Domain', publicDomain: true },
+  { id: 'BBE', name: 'Bible in Basic English', abbr: 'BBE', languageCode: 'en', languageName: 'English', source: 'bible-api', attribution: 'Public Domain', publicDomain: true },
+  { id: 'YLT', name: "Young's Literal Translation", abbr: 'YLT', languageCode: 'en', languageName: 'English', source: 'bolls', attribution: 'Public Domain', publicDomain: true },
+  { id: 'NET', name: 'New English Translation', abbr: 'NET', languageCode: 'en', languageName: 'English', source: 'bolls', attribution: 'NET Free', publicDomain: false },
+
+  // ── Hindi (YouVersion — 6 Bibles available) ──
+  { id: 'YV-IRVHin', name: 'इंडियन रिवाइज्ड वर्जन (IRV) हिंदी - 2019', abbr: 'IRV-Hin', nativeName: 'IRV हिंदी', languageCode: 'hi', languageName: 'Hindi', languageNative: 'हिन्दी', source: 'youversion', youversionId: 1980, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-HCV', name: 'सरल हिन्दी बाइबल', abbr: 'HCV', nativeName: 'सरल हिन्दी बाइबल', languageCode: 'hi', languageName: 'Hindi', languageNative: 'हिन्दी', source: 'youversion', youversionId: 1628, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-HHBR', name: 'Hindi Holy Bible', abbr: 'HHBR', nativeName: 'हिन्दी होली बाइबल', languageCode: 'hi', languageName: 'Hindi', languageNative: 'हिन्दी', source: 'youversion', youversionId: 820, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-HSB', name: 'नवीन हिंदी बाइबल', abbr: 'HSB', nativeName: 'नवीन हिंदी बाइबल', languageCode: 'hi', languageName: 'Hindi', languageNative: 'हिन्दी', source: 'youversion', youversionId: 3540, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Tamil (YouVersion — 3 Bibles) ──
+  { id: 'YV-IRVTam', name: 'இண்டியன் ரிவைஸ்டு வெர்ஸன் (IRV) - தமிழ்', abbr: 'IRV-Tam', nativeName: 'IRV தமிழ்', languageCode: 'ta', languageName: 'Tamil', languageNative: 'தமிழ்', source: 'youversion', youversionId: 1899, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-TCV', name: 'இந்திய சமகால தமிழ் மொழிப்பெயர்ப்பு 2022', abbr: 'TCV', nativeName: 'TCV தமிழ்', languageCode: 'ta', languageName: 'Tamil', languageNative: 'தமிழ்', source: 'youversion', youversionId: 2730, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Telugu (YouVersion — 1 Bible) ──
+  { id: 'YV-IRVTel', name: 'ఇండియన్ రివైజ్డ్ వెర్షన్ (IRV) - తెలుగు -2019', abbr: 'IRV-Tel', nativeName: 'IRV తెలుగు', languageCode: 'te', languageName: 'Telugu', languageNative: 'తెలుగు', source: 'youversion', youversionId: 1895, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Malayalam (YouVersion — 3 Bibles) ──
+  { id: 'YV-MCV', name: 'സമകാലിക മലയാളവിവർത്തനം', abbr: 'MCV', nativeName: 'MCV മലയാളം', languageCode: 'ml', languageName: 'Malayalam', languageNative: 'മലയാളം', source: 'youversion', youversionId: 2431, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-IRVMal', name: 'ഇന്ത്യൻ റിവൈസ്ഡ് വേർഷൻ (IRV) - മലയാളം', abbr: 'IRV-Mal', nativeName: 'IRV മലയാളം', languageCode: 'ml', languageName: 'Malayalam', languageNative: 'മലയാളം', source: 'youversion', youversionId: 1912, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Bengali (YouVersion — 2 Bibles) ──
+  { id: 'YV-BCV', name: 'বাংলা সমকালীন সংস্করণ', abbr: 'BCV', nativeName: 'BCV বাংলা', languageCode: 'bn', languageName: 'Bengali', languageNative: 'বাংলা', source: 'youversion', youversionId: 2412, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-IRVBen', name: 'ইন্ডিয়ান রিভাইজড ভার্সন (IRV) - বেঙ্গলী', abbr: 'IRV-Ben', nativeName: 'IRV বাংলা', languageCode: 'bn', languageName: 'Bengali', languageNative: 'বাংলা', source: 'youversion', youversionId: 1883, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Marathi (YouVersion — 1 Bible) ──
+  { id: 'YV-IRVMar', name: 'इंडियन रीवाइज्ड वर्जन (IRV) - मराठी', abbr: 'IRV-Mar', nativeName: 'IRV मराठी', languageCode: 'mr', languageName: 'Marathi', languageNative: 'मराठी', source: 'youversion', youversionId: 1910, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Punjabi (YouVersion — 1 Bible) ──
+  { id: 'YV-IRVPun', name: 'ਇੰਡਿਅਨ ਰਿਵਾਇਜ਼ਡ ਵਰਜ਼ਨ (IRV) - ਪੰਜਾਬੀ', abbr: 'IRV-Pan', nativeName: 'IRV ਪੰਜਾਬੀ', languageCode: 'pa', languageName: 'Punjabi', languageNative: 'ਪੰਜਾਬੀ', source: 'youversion', youversionId: 1884, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Gujarati (YouVersion — 1 Bible) ──
+  { id: 'YV-IRVGuj', name: 'ઇન્ડિયન રીવાઇઝ્ડ વર્ઝન ગુજરાતી - 2019', abbr: 'IRV-Guj', nativeName: 'IRV ગુજરાતી', languageCode: 'gu', languageName: 'Gujarati', languageNative: 'ગુજરાતી', source: 'youversion', youversionId: 1911, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Kannada (YouVersion — 1 Bible with full 66 books) ──
+  { id: 'YV-IRVKan', name: 'ಇಂಡಿಯನ್ ರಿವೈಜ್ಡ್ ವರ್ಸನ್ (IRV) - ಕನ್ನಡ - 2019', abbr: 'IRV-Kan', nativeName: 'IRV ಕನ್ನಡ', languageCode: 'kn', languageName: 'Kannada', languageNative: 'ಕನ್ನಡ', source: 'youversion', youversionId: 1898, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Odia (YouVersion — 1 Bible) ──
+  { id: 'YV-IRVOry', name: 'ଇଣ୍ଡିୟାନ ରିୱାଇସ୍ଡ୍ ୱରସନ୍ ଓଡିଆ', abbr: 'IRV-Odi', nativeName: 'IRV ଓଡ଼ିଆ', languageCode: 'or', languageName: 'Odia', languageNative: 'ଓଡ଼ିଆ', source: 'youversion', youversionId: 2743, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Assamese (YouVersion — 1 Bible) ──
+  { id: 'YV-IRVAsm', name: 'ইণ্ডিয়ান ৰিভাইচ ভাৰচন (IRV) আচামিচ - 2019', abbr: 'IRV-Asm', nativeName: 'IRV অসমীয়া', languageCode: 'as', languageName: 'Assamese', languageNative: 'অসমীয়া', source: 'youversion', youversionId: 1979, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Urdu (YouVersion — 2 Bibles with full 66 books) ──
+  { id: 'YV-IRVUrd', name: 'इंडियन रिवाइज्ड वर्जन (IRV) उर्दू - 2019', abbr: 'IRV-Urd', nativeName: 'IRV اردو', languageCode: 'ur', languageName: 'Urdu', languageNative: 'اردو', source: 'youversion', youversionId: 1885, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-UrdGVR', name: 'Kitab-i Muqaddas', abbr: 'GVR', nativeName: 'کتاب مقدس', languageCode: 'ur', languageName: 'Urdu', languageNative: 'اردو', source: 'youversion', youversionId: 1887, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Spanish (YouVersion) ──
+  { id: 'YV-NVI-S', name: 'Nueva Versión Internacional - Español', abbr: 'NVI', nativeName: 'NVI Español', languageCode: 'es', languageName: 'Spanish', languageNative: 'Español', source: 'youversion', youversionId: 128, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-RVES', name: 'Reina-Valera Antigua', abbr: 'RVA', nativeName: 'Reina-Valera Antigua', languageCode: 'es', languageName: 'Spanish', languageNative: 'Español', source: 'youversion', youversionId: 147, attribution: 'YouVersion', publicDomain: true },
+
+  // ── French (YouVersion) ──
+  { id: 'YV-LSG', name: 'La Sainte Bible par Louis Segond 1910', abbr: 'LSG', nativeName: 'Louis Segond 1910', languageCode: 'fr', languageName: 'French', languageNative: 'Français', source: 'youversion', youversionId: 93, attribution: 'YouVersion', publicDomain: true },
+
+  // ── Portuguese (YouVersion) ──
+  { id: 'YV-NVI-PT', name: 'Nova Versão Internacional - Português', abbr: 'NVI-PT', nativeName: 'NVI Português', languageCode: 'pt', languageName: 'Portuguese', languageNative: 'Português', source: 'youversion', youversionId: 129, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Chinese (YouVersion) ──
+  { id: 'YV-CCB', name: '当代译本', abbr: 'CCB', nativeName: '当代译本', languageCode: 'zh', languageName: 'Chinese', languageNative: '中文', source: 'youversion', youversionId: 36, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Arabic (YouVersion) ──
+  { id: 'YV-NAV', name: 'كتاب الحياة', abbr: 'NAV', nativeName: 'كتاب الحياة', languageCode: 'ar', languageName: 'Arabic', languageNative: 'العربية', source: 'youversion', youversionId: 101, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Russian (YouVersion) ──
+  { id: 'YV-NRT', name: 'Новый русский перевод', abbr: 'NRT', nativeName: 'Новый русский перевод', languageCode: 'ru', languageName: 'Russian', languageNative: 'Русский', source: 'youversion', youversionId: 143, attribution: 'YouVersion', publicDomain: false },
+
+  // ── German (YouVersion) ──
+  { id: 'YV-DELUT', name: 'Lutherbibel 1912', abbr: 'DELUT', nativeName: 'Lutherbibel 1912', languageCode: 'de', languageName: 'German', languageNative: 'Deutsch', source: 'youversion', youversionId: 51, attribution: 'YouVersion', publicDomain: true },
 ];
 
 /** Map of translation ID → translation object. */
@@ -81,7 +128,7 @@ export const TRANSLATIONS_BY_ID: Record<string, BibleTranslation> = Object.fromE
 );
 
 /** Default translation when the user hasn't picked one. */
-export const DEFAULT_TRANSLATION_ID = 'KJV';
+export const DEFAULT_TRANSLATION_ID = 'YV-BSB';
 
 export function getTranslation(id: string): BibleTranslation | undefined {
   return TRANSLATIONS_BY_ID[id];
