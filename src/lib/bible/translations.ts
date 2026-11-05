@@ -162,8 +162,18 @@ export const TRANSLATIONS: BibleTranslation[] = [
   { id: 'YV-NLB', name: 'Norwegian Living Bible', abbr: 'NLB', nativeName: 'Norwegian Living Bible', languageCode: 'no', languageName: 'Norwegian', languageNative: 'Norsk', source: 'youversion', youversionId: 115, attribution: 'YouVersion', publicDomain: false },
   { id: 'YV-grcF35', name: 'The Greek New Testament According to Family 35', abbr: 'grcF35', nativeName: 'Greek NT Family 35', languageCode: 'el', languageName: 'Greek', languageNative: 'Ελληνικά', source: 'youversion', youversionId: 3130, attribution: 'YouVersion', publicDomain: true },
 
-  // ── Americas: Haitian Creole ──
+  // ── Americas: Haitian Creole, Quechua, Guarani ──
   { id: 'YV-hatbsa', name: 'Bib Sen An: Kreyòl Ayisyen', abbr: 'hatbsa', nativeName: 'Bib Kreyòl Ayisyen', languageCode: 'ht', languageName: 'Haitian Creole', languageNative: 'Kreyòl Ayisyen', source: 'youversion', youversionId: 3821, attribution: 'YouVersion', publicDomain: false },
+  { id: 'YV-qub', name: 'Quechua, Huallaga Huánuco', abbr: 'qub', nativeName: 'Quechua Huallaga', languageCode: 'qu', languageName: 'Quechua', languageNative: 'Runa Simi', source: 'youversion', youversionId: 1088, attribution: 'YouVersion', publicDomain: true },
+  { id: 'YV-gui', name: 'Nuevo Testamento Guaraní Pe', abbr: 'gui', nativeName: 'Guaraní Pe', languageCode: 'gn', languageName: 'Guarani', languageNative: 'Avañeẽ', source: 'youversion', youversionId: 590, attribution: 'YouVersion', publicDomain: true },
+
+  // ── Additional: Kikongo, Kinyarwanda, Bodo, Burmese, Khmer, Sinhala ──
+  { id: 'YV-MKongoBu', name: 'Bible en mashi du Congo (Kikongo)', abbr: 'MKongoBu', nativeName: 'Bible Kikongo', languageCode: 'kg', languageName: 'Kikongo', languageNative: 'Kikongo', source: 'youversion', youversionId: 3953, attribution: 'YouVersion', publicDomain: true },
+  { id: 'YV-nyj', name: 'Bible en Kinyarwanda', abbr: 'nyj', nativeName: 'Bible Kinyarwanda', languageCode: 'rw', languageName: 'Kinyarwanda', languageNative: 'Kinyarwanda', source: 'youversion', youversionId: 4564, attribution: 'YouVersion', publicDomain: true },
+  { id: 'YV-BPL25', name: 'Bodo Parja Bible', abbr: 'BPL25', nativeName: 'Bodo Parja Bible', languageCode: 'brx', languageName: 'Bodo', languageNative: 'बड़ो', source: 'youversion', youversionId: 2777, attribution: 'YouVersion', publicDomain: true },
+  { id: 'YV-SANBU', name: 'Sanskrit Bible (NT) in Burmese Script', abbr: 'SANBU', nativeName: 'သတျဝေဒး၊', languageCode: 'my', languageName: 'Burmese', languageNative: 'မြန်မာ', source: 'youversion', youversionId: 2158, attribution: 'YouVersion', publicDomain: true },
+  { id: 'YV-cmoK', name: 'Central Mnong (Khmer)', abbr: 'cmoK', nativeName: 'Central Mnong', languageCode: 'km', languageName: 'Khmer', languageNative: 'ខ្មែរ', source: 'youversion', youversionId: 1758, attribution: 'YouVersion', publicDomain: true },
+  { id: 'YV-TRV', name: 'Sri Lankan Easy Tamil Translation 2021', abbr: 'TRV', nativeName: 'Sri Lankan Tamil', languageCode: 'si', languageName: 'Sinhala', languageNative: 'සිංහල', source: 'youversion', youversionId: 3281, attribution: 'YouVersion', publicDomain: false },
 ];
 
 /** Map of translation ID → translation object. */
