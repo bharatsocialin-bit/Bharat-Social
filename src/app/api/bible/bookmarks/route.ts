@@ -42,6 +42,9 @@ export async function POST(request: Request) {
     const verse = typeof body.verse === 'number' ? body.verse : parseInt(String(body.verse), 10);
     const verseText = typeof body.verseText === 'string' ? body.verseText : '';
     const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim().slice(0, 500) : null;
+    const highlightColor = typeof body.highlightColor === 'string' && body.highlightColor
+      ? body.highlightColor.slice(0, 20)
+      : null;
 
     if (!translation || !book || !bookName || !Number.isFinite(chapter) || !Number.isFinite(verse) || !verseText) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
@@ -51,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     // Upsert — if the bookmark already exists (same user + translation + book
-    // + chapter + verse), update the note + verseText. Otherwise create.
+    // + chapter + verse), update the note + verseText + highlightColor. Otherwise create.
     const bookmark = await db.bibleBookmark.upsert({
       where: {
         userId_translation_book_chapter_verse: {
@@ -62,7 +65,7 @@ export async function POST(request: Request) {
           verse,
         },
       },
-      update: { note, verseText },
+      update: { note, verseText, highlightColor },
       create: {
         userId: user.id,
         translation,
@@ -72,6 +75,7 @@ export async function POST(request: Request) {
         verse,
         verseText,
         note,
+        highlightColor,
       },
     });
 

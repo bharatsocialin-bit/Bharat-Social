@@ -82,6 +82,8 @@ model User {
   userStoryViews         UserStoryView[]
   // ── Bible ──
   bibleBookmarks         BibleBookmark[]
+  bibleNotes             BibleNote[]
+  bibleReadingHistory    BibleReadingHistory[]
   bibleReadingStreak     BibleReadingStreak?
   bibleReadingDays       BibleReadingDay[]
 
@@ -367,29 +369,68 @@ model UserStoryView {
   @@index([viewerId])
 }
 
-// ── Bible — bookmarks, reading streak, daily reading tracking ──────────────
-// Translation text is fetched live from bolls.life + bible-api.com (free,
-// no key). Only user-specific data (bookmarks, streak) is stored locally.
+// ── Bible — bookmarks, highlights, notes, reading history, streak ──────────
+// Translation text is fetched live from YouVersion + helloao.org (free).
+// Only user-specific data is stored locally.
 
 model BibleBookmark {
   id           String   @id @default(cuid())
   userId       String
-  translation  String   // e.g. "KJV", "WEB", "IRVHin"
-  book         String   // e.g. "GEN", "JHN" (3-letter USFM ID)
-  bookName     String   // e.g. "Genesis", "John" (for display)
+  translation  String
+  book         String
+  bookName     String
   chapter      Int
   verse        Int
-  // Optional note the user can attach to the bookmark.
   note         String?
-  // The verse text at the time of bookmarking — cached so the bookmark list
-  // renders without re-fetching every verse from the API.
   verseText    String
+  // Highlight color — null = no highlight, just a bookmark.
+  // Values: "yellow", "green", "blue", "pink", "orange"
+  highlightColor String?
   createdAt    DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, translation, book, chapter, verse])
   @@index([userId])
+  @@index([userId, translation])
+}
+
+// Personal Bible notes — longer-form annotations on a verse or passage.
+// Separate from bookmarks (which are quick saves). Notes can be up to 2000 chars.
+model BibleNote {
+  id           String   @id @default(cuid())
+  userId       String
+  translation  String
+  book         String
+  bookName     String
+  chapter      Int
+  verse        Int
+  content      String   @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, translation, book, chapter, verse])
+  @@index([userId])
+  @@index([userId, translation])
+}
+
+// Reading history — one row per chapter the user has opened.
+// Used to show "Continue Reading" + reading history list.
+model BibleReadingHistory {
+  id           String   @id @default(cuid())
+  userId       String
+  translation  String
+  book         String
+  bookName     String
+  chapter      Int
+  readAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, translation, book, chapter])
+  @@index([userId, readAt])
   @@index([userId, translation])
 }
 

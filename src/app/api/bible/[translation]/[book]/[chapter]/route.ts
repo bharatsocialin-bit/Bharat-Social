@@ -3,6 +3,7 @@ import { fetchChapter } from '@/lib/bible/client';
 import { getCurrentUser } from '@/lib/auth/getCurrentUser';
 import { db } from '@/lib/db';
 import { recordReadingDay } from '@/lib/bible/streak';
+import { getBook } from '@/lib/bible/books';
 
 // GET /api/bible/[translation]/[book]/[chapter]
 //
@@ -43,6 +44,28 @@ export async function GET(
         const user = await getCurrentUser();
         if (user) {
           await recordReadingDay(user.id);
+          // Also record reading history.
+          const bookMeta = getBook(book.toUpperCase());
+          if (bookMeta) {
+            await db.bibleReadingHistory.upsert({
+              where: {
+                userId_translation_book_chapter: {
+                  userId: user.id,
+                  translation,
+                  book: book.toUpperCase(),
+                  chapter,
+                },
+              },
+              update: { readAt: new Date() },
+              create: {
+                userId: user.id,
+                translation,
+                book: book.toUpperCase(),
+                bookName: bookMeta.name,
+                chapter,
+              },
+            }).catch(() => {});
+          }
         }
       } catch {
         // Non-fatal.

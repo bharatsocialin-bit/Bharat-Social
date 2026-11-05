@@ -132,28 +132,8 @@ export function RightSidebar() {
       )}
 
       {/* Faith Pulse widget */}
-      {/* Daily Verse widget */}
-      <section className="overflow-hidden rounded-2xl border border-saffron/30 bg-gradient-to-br from-saffron-soft/30 to-card shadow-soft">
-        <header className="flex items-center justify-between px-4 pt-4">
-          <h2 className="flex items-center gap-2 text-sm font-bold text-white">
-            <BookOpen className="h-4 w-4 text-saffron" />
-            Daily Verse
-          </h2>
-          <span className="text-xs text-muted-foreground">
-            {new Date().toLocaleDateString('en', { month: 'short', day: 'numeric' })}
-          </span>
-        </header>
-        <div className="px-4 pb-4 pt-3">
-          <p className="text-sm italic leading-relaxed text-white/90">
-            &ldquo;Be strong and courageous. Do not be afraid; do not be
-            discouraged, for the LORD your God will be with you wherever you
-            go.&rdquo;
-          </p>
-          <p className="mt-2 text-xs font-semibold text-saffron">
-            — Joshua 1:9
-          </p>
-        </div>
-      </section>
+      {/* Daily Verse widget — fetches real Verse of the Day from /api/bible/votd */}
+      <DailyVerseWidget />
 
       {/* Faith Pulse widget */}
       <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
@@ -319,5 +299,68 @@ export function RightSidebar() {
         </p>
       </footer>
     </aside>
+  );
+}
+
+// ── Daily Verse Widget — fetches real VOTD from /api/bible/votd ────────────
+
+function DailyVerseWidget() {
+  const [votd, setVotd] = useState<{
+    reference: string;
+    text: string;
+    translation: string;
+    book: string;
+    chapter: number;
+    verse: number;
+    bookName: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/bible/votd')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => { if (!cancelled) setVotd(data); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const setActiveNav = useSocialStore((s) => s.setActiveNav);
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-saffron/30 bg-gradient-to-br from-saffron-soft/30 to-card shadow-soft">
+      <header className="flex items-center justify-between px-4 pt-4">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-white">
+          <BookOpen className="h-4 w-4 text-saffron" />
+          Verse of the Day
+        </h2>
+        <span className="text-xs text-muted-foreground">
+          {new Date().toLocaleDateString('en', { month: 'short', day: 'numeric' })}
+        </span>
+      </header>
+      <div className="px-4 pb-4 pt-3">
+        {loading ? (
+          <div className="flex items-center gap-2 py-3">
+            <Loader2 className="h-4 w-4 animate-spin text-saffron" />
+            <span className="text-xs text-muted-foreground">Loading today&rsquo;s verse…</span>
+          </div>
+        ) : votd ? (
+          <button
+            onClick={() => setActiveNav('bible')}
+            className="block w-full text-left"
+          >
+            <p className="text-sm italic leading-relaxed text-white/90">
+              &ldquo;{votd.text}&rdquo;
+            </p>
+            <p className="mt-2 text-xs font-semibold text-saffron">
+              — {votd.reference} ({votd.translation})
+            </p>
+          </button>
+        ) : (
+          <p className="py-2 text-sm text-muted-foreground">Verse unavailable.</p>
+        )}
+      </div>
+    </section>
   );
 }
