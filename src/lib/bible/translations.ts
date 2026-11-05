@@ -179,6 +179,18 @@ export const TRANSLATIONS: BibleTranslation[] = [
   { id: 'YV-SANBU', name: 'Sanskrit Bible (NT) in Burmese Script', abbr: 'SANBU', nativeName: 'သတျဝေဒး၊', languageCode: 'my', languageName: 'Burmese', languageNative: 'မြန်မာ', source: 'youversion', youversionId: 2158, attribution: 'YouVersion', publicDomain: true },
   { id: 'YV-cmoK', name: 'Central Mnong (Khmer)', abbr: 'cmoK', nativeName: 'Central Mnong', languageCode: 'km', languageName: 'Khmer', languageNative: 'ខ្មែរ', source: 'youversion', youversionId: 1758, attribution: 'YouVersion', publicDomain: true },
   { id: 'YV-TRV', name: 'Sri Lankan Easy Tamil Translation 2021', abbr: 'TRV', nativeName: 'Sri Lankan Tamil', languageCode: 'si', languageName: 'Sinhala', languageNative: 'සිංහල', source: 'youversion', youversionId: 3281, attribution: 'YouVersion', publicDomain: false },
+
+  // ── Additional via helloao.org: Oromo, Kirundi, Wolof, Nepali, Malay, Tok Pisin, Hiri Motu, Tongan, Māori, Tigrinya ──
+  { id: 'HA-gax_twf', name: 'Kitaaba Woyyuu (Oromo)', abbr: 'Oromo', nativeName: 'Kitaaba Woyyuu', languageCode: 'gax', languageName: 'Oromo', languageNative: 'Afaan Oromoo', source: 'helloao', helloaoId: 'gax_twf', attribution: 'eBible.org', publicDomain: false },
+  { id: 'HA-run_bib', name: 'Open Kirundi Contemporary Bible', abbr: 'Kirundi', nativeName: 'Open Kirundi Bible', languageCode: 'run', languageName: 'Kirundi', languageNative: 'Ikirundi', source: 'helloao', helloaoId: 'run_bib', attribution: 'eBible.org', publicDomain: false },
+  { id: 'HA-wol_mbs', name: 'Kàddug Yàlla (Wolof)', abbr: 'Wolof', nativeName: 'Kàddug Yàlla', languageCode: 'wol', languageName: 'Wolof', languageNative: 'Wolof', source: 'helloao', helloaoId: 'wol_mbs', attribution: 'eBible.org', publicDomain: false },
+  { id: 'HA-npi_ncb', name: 'नेपाली समकालीन सर्वसुलभ संस्करण (Nepali)', abbr: 'Nepali', nativeName: 'नेपाली बाइबल', languageCode: 'npi', languageName: 'Nepali', languageNative: 'नेपाली', source: 'helloao', helloaoId: 'npi_ncb', attribution: 'eBible.org', publicDomain: false },
+  { id: 'HA-zlm_ksz', name: 'Kitab Suci Zabur dan Injil (Malay)', abbr: 'Malay', nativeName: 'Kitab Suci', languageCode: 'zlm', languageName: 'Malay', languageNative: 'Bahasa Melayu', source: 'helloao', helloaoId: 'zlm_ksz', attribution: 'eBible.org', publicDomain: false },
+  { id: 'HA-tpi_png', name: 'Buk Baibel long Tok Pisin', abbr: 'TokPisin', nativeName: 'Buk Baibel', languageCode: 'tpi', languageName: 'Tok Pisin', languageNative: 'Tok Pisin', source: 'helloao', helloaoId: 'tpi_png', attribution: 'eBible.org', publicDomain: false },
+  { id: 'HA-hmo_png', name: 'Buka Helaga (Hiri Motu)', abbr: 'HiriMotu', nativeName: 'Buka Helaga', languageCode: 'hmo', languageName: 'Hiri Motu', languageNative: 'Hiri Motu', source: 'helloao', helloaoId: 'hmo_png', attribution: 'eBible.org', publicDomain: false },
+  { id: 'HA-ton_png', name: 'KO E TOHI TAPU KĀTOA (Tongan)', abbr: 'Tongan', nativeName: 'Ko e Tohi Tapu', languageCode: 'ton', languageName: 'Tongan', languageNative: 'Lea Faka-Tonga', source: 'helloao', helloaoId: 'ton_png', attribution: 'eBible.org', publicDomain: true },
+  { id: 'HA-mri_2012', name: 'Paipera Tapu 2012 (Māori)', abbr: 'Maori', nativeName: 'Paipera Tapu', languageCode: 'mri', languageName: 'Māori', languageNative: 'Te Reo Māori', source: 'helloao', helloaoId: 'mri_2012', attribution: 'eBible.org', publicDomain: false },
+  { id: 'HA-tig_mdw', name: 'Meadowlands Bible (Tigre)', abbr: 'Tigre', nativeName: 'Meadowlands Bible', languageCode: 'tig', languageName: 'Tigrinya', languageNative: 'ትግርኛ', source: 'helloao', helloaoId: 'tig_mdw', attribution: 'eBible.org', publicDomain: false },
 ];
 
 /** Map of translation ID → translation object. */
