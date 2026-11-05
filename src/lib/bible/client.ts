@@ -16,6 +16,7 @@
 import { getTranslation } from './translations';
 import { getBook } from './books';
 import { fetchChapterFromYouVersion } from './youversion-client';
+import { fetchChapterFromHelloao } from './helloao-client';
 import type { BibleVerse, BibleChapter } from './client-types';
 
 // ── bolls.life fetcher ─────────────────────────────────────────────────────
@@ -113,8 +114,16 @@ export async function fetchChapter(
   if (!translation || !book) return null;
   if (chapter < 1 || chapter > book.chapters) return null;
 
-  // All translations are sourced from YouVersion Platform API.
-  // Requires YOUVERSION_APP_KEY env var (server-only).
+  // ── helloao.org (free, no key — KJV, WEB, + 1,500 translations) ──
+  if (translation.source === 'helloao' && translation.helloaoId) {
+    const data = await fetchChapterFromHelloao(translation.helloaoId, usfm, chapter);
+    if (data) {
+      return { ...data, translation: translationId };
+    }
+    return null;
+  }
+
+  // ── YouVersion Platform API (requires YOUVERSION_APP_KEY) ──
   if (translation.source === 'youversion' && translation.youversionId) {
     const yvData = await fetchChapterFromYouVersion(
       translation.youversionId,
@@ -122,10 +131,7 @@ export async function fetchChapter(
       chapter,
     );
     if (yvData) {
-      return {
-        ...yvData,
-        translation: translationId,
-      };
+      return { ...yvData, translation: translationId };
     }
   }
 

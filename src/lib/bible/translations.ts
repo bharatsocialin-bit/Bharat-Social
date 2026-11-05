@@ -28,9 +28,11 @@ export interface BibleTranslation {
   /** Native script of the language name, e.g. "हिन्दी", "தமிழ்". */
   languageNative?: string;
   /** Which API serves this translation. */
-  source: 'youversion' | 'bolls' | 'bible-api';
+  source: 'youversion' | 'bolls' | 'bible-api' | 'helloao';
   /** YouVersion Bible ID (numeric, when source = 'youversion'). */
   youversionId?: number;
+  /** helloao.org translation ID (string, when source = 'helloao'). */
+  helloaoId?: string;
   /** Source attribution label. */
   attribution?: string;
   /** Whether this translation is in the public domain. */
@@ -40,6 +42,9 @@ export interface BibleTranslation {
 export const TRANSLATIONS: BibleTranslation[] = [
   // ── English ──
   { id: 'YV-BSB', name: 'Berean Standard Bible', abbr: 'BSB', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 3034, attribution: 'YouVersion', publicDomain: true },
+  // KJV + WEB via helloao.org (free, no key, public domain)
+  { id: 'KJV', name: 'King James Version', abbr: 'KJV', languageCode: 'en', languageName: 'English', source: 'helloao', helloaoId: 'eng_kja', attribution: 'Public Domain (eBible.org)', publicDomain: true },
+  { id: 'WEB', name: 'World English Bible', abbr: 'WEB', languageCode: 'en', languageName: 'English', source: 'helloao', helloaoId: 'ENGWEBP', attribution: 'Public Domain (eBible.org)', publicDomain: true },
   { id: 'YV-NIV', name: 'New International Version', abbr: 'NIV', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 111, attribution: 'YouVersion', publicDomain: false },
   { id: 'YV-NASB', name: 'New American Standard Bible 1995', abbr: 'NASB', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 100, attribution: 'YouVersion', publicDomain: false },
   { id: 'YV-AMP', name: 'Amplified Bible', abbr: 'AMP', languageCode: 'en', languageName: 'English', source: 'youversion', youversionId: 1588, attribution: 'YouVersion', publicDomain: false },
