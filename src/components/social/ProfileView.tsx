@@ -49,6 +49,7 @@ interface PublicProfileUser {
   avatarUrl: string | null;
   state: string | null;
   city: string | null;
+  country: string | null;
   links: ProfileLink[];
   createdAt: string;
   suspended?: boolean;
@@ -135,7 +136,7 @@ export function ProfileView() {
         name: live?.user.name || authUser?.name || 'User',
         handle: live?.user.username || authUser?.email?.split('@')[0] || 'user',
         bio: live?.user.bio || '',
-        location: [live?.user.city, live?.user.state].filter(Boolean).join(', '),
+        location: [live?.user.city, live?.user.state, live?.user.country].filter(Boolean).join(', '),
         avatar: {
           name: live?.user.name || authUser?.name || 'User',
           initials: live?.user.initials || 'BS',

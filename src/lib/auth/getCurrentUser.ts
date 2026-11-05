@@ -27,6 +27,7 @@ export async function getCurrentUser() {
       initials: true,
       state: true,
       city: true,
+      country: true,
       role: true,
       suspended: true,
       createdAt: true,

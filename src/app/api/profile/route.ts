@@ -39,6 +39,7 @@ function serializeOwnProfile(user: {
   initials: string;
   state: string | null;
   city: string | null;
+  country: string | null;
   gender: string | null;
   dateOfBirth: Date | null;
   links: string;
@@ -57,6 +58,7 @@ function serializeOwnProfile(user: {
     initials: user.initials,
     state: user.state,
     city: user.city,
+    country: user.country,
     gender: user.gender,
     dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString().slice(0, 10) : null,
     links: parseStoredLinks(user.links),
@@ -93,6 +95,7 @@ export async function GET(request: Request) {
           initials: true,
           state: true,
           city: true,
+          country: true,
           gender: true,
           dateOfBirth: true,
           links: true,
@@ -141,7 +144,7 @@ export async function GET(request: Request) {
 }
 
 // Whitelisted string fields that map straight onto User columns.
-const PATCHABLE_STRING_FIELDS = ['name', 'bio', 'state', 'city', 'avatarGradient', 'initials'] as const;
+const PATCHABLE_STRING_FIELDS = ['name', 'bio', 'state', 'city', 'country', 'avatarGradient', 'initials'] as const;
 
 const ALLOWED_GRADIENTS = [
   'from-sky-500 to-indigo-500',
@@ -188,6 +191,7 @@ export async function PATCH(request: Request) {
     const bio = body.bio as string | null | undefined;
     const state = body.state as string | null | undefined;
     const city = body.city as string | null | undefined;
+    const country = body.country as string | null | undefined;
     const avatarGradient = body.avatarGradient as string | null | undefined;
     const initials = body.initials as string | null | undefined;
 
@@ -206,6 +210,9 @@ export async function PATCH(request: Request) {
     }
     if (city !== undefined && city !== null && city.length > 100) {
       return NextResponse.json({ error: 'City is too long.' }, { status: 400 });
+    }
+    if (country !== undefined && country !== null && country.length > 100) {
+      return NextResponse.json({ error: 'Country is too long.' }, { status: 400 });
     }
     if (initials !== undefined && initials !== null && initials.length > 4) {
       return NextResponse.json({ error: 'Initials are too long (max 4 characters).' }, { status: 400 });
@@ -228,6 +235,7 @@ export async function PATCH(request: Request) {
     if (bio !== undefined) update.bio = bio === null || bio.trim() === '' ? null : bio;
     if (state !== undefined) update.state = state === null || state.trim() === '' ? null : state;
     if (city !== undefined) update.city = city === null || city.trim() === '' ? null : city;
+    if (country !== undefined) update.country = country === null || country.trim() === '' ? null : country;
     if (avatarGradient !== undefined) update.avatarGradient = avatarGradient;
     if (initials !== undefined) update.initials = initials === null ? 'Ne' : initials.toUpperCase();
 
@@ -298,6 +306,7 @@ export async function PATCH(request: Request) {
           initials: true,
           state: true,
           city: true,
+          country: true,
           gender: true,
           dateOfBirth: true,
           links: true,

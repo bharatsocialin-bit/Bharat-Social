@@ -63,6 +63,7 @@ export interface OwnProfile {
   initials: string;
   state: string | null;
   city: string | null;
+  country: string | null;
   gender: string | null;
   dateOfBirth: string | null; // "YYYY-MM-DD" | null
   links: ProfileLink[];

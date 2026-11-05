@@ -52,6 +52,7 @@ export function OnboardingView({ profile, onComplete }: OnboardingViewProps) {
     gender: profile.gender ?? '',
     state: profile.state ?? '',
     city: profile.city ?? '',
+    country: profile.country ?? '',
     links: profile.links,
     avatarUrl: profile.avatarUrl,
   }));

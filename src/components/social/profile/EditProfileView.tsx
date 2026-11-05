@@ -84,6 +84,7 @@ export function EditProfileView() {
           gender: data.user.gender ?? '',
           state: data.user.state ?? '',
           city: data.user.city ?? '',
+          country: data.user.country ?? '',
           links: data.user.links,
           avatarUrl: data.user.avatarUrl,
         });
@@ -141,7 +142,7 @@ export function EditProfileView() {
       name: name.trim() || profile?.username || 'You',
       handle: username.trim().toLowerCase() || 'username',
       bio: form.bio,
-      location: [form.city, form.state].filter(Boolean).join(', '),
+      location: [form.city, form.state, form.country].filter(Boolean).join(', '),
       links: form.links,
       avatarUrl: form.avatarUrl,
       initials: profile?.initials || 'BS',

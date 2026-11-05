@@ -29,6 +29,7 @@ model User {
   initials        String   @default("Ne")
   state           String?
   city            String?
+  country         String?
   // ── Profile setup & editing (feature: complete profile system) ──
   // Persistent Supabase Storage public URL of the uploaded profile photo.
   // Null = render the generated gradient avatar (avatarGradient + initials).
