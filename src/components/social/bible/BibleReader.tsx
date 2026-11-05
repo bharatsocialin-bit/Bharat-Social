@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { VerseShareDialog } from './VerseShareDialog';
 import {
   Dialog,
   DialogContent,
@@ -317,6 +318,17 @@ export function BibleReader({
     }
   }
 
+  // ── Share verse (opens share dialog) ──
+  const [shareDialogState, setShareDialogState] = useState<{
+    open: boolean;
+    chapter: LoadedChapter | null;
+    verse: Verse | null;
+  }>({ open: false, chapter: null, verse: null });
+
+  function openShareDialog(chapter: LoadedChapter, verse: Verse) {
+    setShareDialogState({ open: true, chapter, verse });
+  }
+
   // ── Navigation: prev/next chapter ──
   function goToPrevChapter() {
     const firstCh = chapters[0];
@@ -529,6 +541,43 @@ export function BibleReader({
                         {isBookmarked && (
                           <BookmarkCheck className="ml-0.5 inline h-3.5 w-3.5 text-saffron/70" />
                         )}
+                        {/* Inline action buttons — appear on hover (desktop) / always visible (mobile) */}
+                        <span className="ml-1 inline-flex items-center gap-0.5 align-middle opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleBookmark(chapter, verse);
+                            }}
+                            className="rounded p-0.5 text-white/40 hover:text-saffron"
+                            aria-label="Bookmark verse"
+                          >
+                            {isBookmarked ? (
+                              <BookmarkCheck className="h-3.5 w-3.5 text-saffron" />
+                            ) : (
+                              <Bookmark className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyVerse(chapter, verse);
+                            }}
+                            className="rounded p-0.5 text-white/40 hover:text-saffron"
+                            aria-label="Copy verse"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openShareDialog(chapter, verse);
+                            }}
+                            className="rounded p-0.5 text-white/40 hover:text-saffron"
+                            aria-label="Share verse"
+                          >
+                            <Share2 className="h-3.5 w-3.5" />
+                          </button>
+                        </span>
                       </span>
                     );
                   })}
@@ -575,6 +624,14 @@ export function BibleReader({
         onToggleBookmark={toggleBookmark}
         onCopy={copyVerse}
         onShare={shareVerse}
+      />
+
+      {/* Verse share dialog with image generation */}
+      <VerseShareDialog
+        open={shareDialogState.open}
+        onOpenChange={(open) => setShareDialogState((prev) => ({ ...prev, open }))}
+        chapter={shareDialogState.chapter}
+        verse={shareDialogState.verse}
       />
     </div>
   );
