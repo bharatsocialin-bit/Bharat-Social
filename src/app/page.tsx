@@ -19,6 +19,7 @@ import { AdminPanel } from '@/components/social/admin/AdminPanel';
 import { ComposeDialog } from '@/components/social/ComposeDialog';
 import { ComingSoon } from '@/components/social/ComingSoon';
 import { BibleView } from '@/components/social/bible/BibleView';
+import { ComicBibleView } from '@/components/social/comics/ComicBibleView';
 import type { PostComposerHandle } from '@/components/social/PostComposer';
 
 export default function Home() {
@@ -47,14 +48,15 @@ export default function Home() {
   const showHome = activeNav === 'home';
   const showAdmin = activeNav === 'admin';
   // Coming Soon features — nav items that don't have full implementations yet.
-  // 'bible' is now LIVE (Phase 1A) — uses BibleView. The others still show Coming Soon.
+  // 'bible' is LIVE (Phase 1A). 'comic-bible' is LIVE (Comic Bible Phase 1).
+  // The others still show Coming Soon.
   const showComingSoon =
-    activeNav === 'comic-bible' ||
     activeNav === 'groups' ||
     activeNav === 'churches' ||
     activeNav === 'marketplace';
 
   const showBible = activeNav === 'bible';
+  const showComicBible = activeNav === 'comic-bible';
 
   const comingSoonConfig: Record<string, { feature: string; description: string }> = {
     bible: {
@@ -129,6 +131,8 @@ export default function Home() {
               />
             ) : showBible ? (
               <BibleView />
+            ) : showComicBible ? (
+              <ComicBibleView />
             ) : showHome ? (
               <HomePage />
             ) : (

@@ -86,6 +86,9 @@ model User {
   bibleReadingHistory    BibleReadingHistory[]
   bibleReadingStreak     BibleReadingStreak?
   bibleReadingDays       BibleReadingDay[]
+  // ── Comic Bible ──
+  comicBookmarks         ComicBookmark[]
+  comicReadingProgress   ComicReadingProgress[]
 
   @@index([username])
   @@index([email])
@@ -460,6 +463,111 @@ model BibleReadingDay {
 
   @@unique([userId, date])
   @@index([userId, date])
+}
+
+// ── Comic Bible — stories, pages, translations, bookmarks, progress ────────
+// Comic Bible is a visual storytelling layer on top of the existing Bible.
+// Story data (artwork, page order) is SHARED across all translations.
+// Translation data (narration, dialogue, scripture) is per-language.
+
+model ComicStory {
+  id             String   @id @default(cuid())
+  title          String   // Default English title
+  testament      String   // "OT" | "NT"
+  category       String   // e.g. "Creation", "David and Goliath"
+  bibleBook      String?  // USFM ID e.g. "1SA"
+  bibleChapter   Int?
+  bibleVerse     Int?
+  coverImagePath String?  // Path under /public/comics/covers/
+  description    String?  // Short story description
+  keyVerse       String?  // Key Bible verse (text)
+  keyVerseRef    String?  // Key Bible verse reference (e.g. "1 Samuel 17:45")
+  lesson         String?  // "What We Learn" section
+  prayer         String?  // Short prayer
+  isKidsFriendly Boolean  @default(false)
+  ageGroup       String?  // "3-5" | "6-8" | "9-12" | null (for kids)
+  pageLayout     String   @default("single") // "single" | "spread"
+  published      Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  pages        ComicPage[]
+  translations ComicTranslation[]
+  bookmarks    ComicBookmark[]
+  progress     ComicReadingProgress[]
+
+  @@index([testament])
+  @@index([published])
+  @@index([isKidsFriendly])
+  @@index([sortOrder])
+}
+
+model ComicPage {
+  id           String   @id @default(cuid())
+  storyId      String
+  pageNumber   Int      // 1-based reading order
+  imagePath    String   // Path under /public/comics/pages/
+  isSpread     Boolean  @default(false) // true = pre-composed two-page spread
+  createdAt    DateTime @default(now())
+
+  story ComicStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, pageNumber])
+  @@index([storyId])
+}
+
+// Per-language translation of a comic story's text content.
+// Artwork (ComicPage) is shared — only the text changes per language.
+model ComicTranslation {
+  id           String   @id @default(cuid())
+  storyId      String
+  languageCode String   // e.g. "en", "hi", "ta" (matches Bible translation language)
+  title        String   // Translated story title
+  introduction String?  // Translated story intro
+  narration    String?  // @db.Text — panel narration text (JSON or plain)
+  dialogue     String?  // @db.Text — character dialogue (JSON or plain)
+  captions     String?  // @db.Text — image captions (JSON or plain)
+  scripture    String?  // @db.Text — scripture quotations (from existing Bible DB)
+  lesson       String?  // @db.Text — "What We Learn" (translated)
+  prayer       String?  // @db.Text — Short prayer (translated)
+  status       String   @default("draft") // "draft" | "published" | "coming_soon"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  story ComicStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, languageCode])
+  @@index([storyId])
+  @@index([languageCode])
+  @@index([status])
+}
+
+model ComicBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  storyId   String
+  createdAt DateTime @default(now())
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story ComicStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@index([userId])
+}
+
+model ComicReadingProgress {
+  id           String   @id @default(cuid())
+  userId       String
+  storyId      String
+  lastPageRead Int      @default(1)
+  updatedAt    DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story ComicStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@index([userId])
 }
 
 // ── Shorts — short-form vertical video ────────────────────────────────────
