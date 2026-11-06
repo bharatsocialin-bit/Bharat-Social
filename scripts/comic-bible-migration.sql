@@ -120,7 +120,7 @@ VALUES (
   '/comics/pages/david-goliath-p1.png',
   true,
   NOW()
-) ON CONFLICT (storyId, "pageNumber") DO NOTHING;
+) ON CONFLICT ("storyId", "pageNumber") DO NOTHING;
 
 INSERT INTO "ComicTranslation" ("id", "storyId", "languageCode", "title", "introduction", "narration", "status", "createdAt", "updatedAt")
 VALUES (
