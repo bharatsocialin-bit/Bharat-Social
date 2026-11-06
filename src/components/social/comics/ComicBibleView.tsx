@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
 import {
   BookImage, Search, Loader2, BookOpen, ChevronRight, ChevronLeft, X,
-  Bookmark, BookmarkCheck, Maximize2, Minimize2, BookMarked,
+  Bookmark, BookmarkCheck, Maximize2, Minimize2, BookMarked, ZoomIn, ZoomOut,
+  Sparkles, Baby, Play,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getBook } from '@/lib/bible/books';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -69,6 +71,64 @@ interface ComicStoryDetail {
 
 type Tab = 'all' | 'OT' | 'NT' | 'kids';
 
+const ZOOM_STEPS = [1, 1.25, 1.5, 2, 2.5, 3];
+
+// USFM book code ("1SA") → readable name ("1 Samuel").
+function bookLabel(usfm: string | null | undefined): string | null {
+  if (!usfm) return null;
+  return getBook(usfm)?.name ?? usfm;
+}
+
+// ── Reader image: sizes itself from the actual canvas box ──────────────────
+// The displayed width/height are computed from the measured reader canvas and
+// the image's intrinsic aspect ratio — no arbitrary pixel caps. A single
+// (spread) artwork may use up to ~90% of the canvas width and the full canvas
+// height; a pair of pages splits the width. object-fit: contain + exact
+// aspect-preserving dimensions guarantee panels are never cropped or skewed.
+
+function ReaderImage({
+  page,
+  canvasW,
+  canvasH,
+  mode,
+  zoom,
+}: {
+  page: ComicPage;
+  canvasW: number;
+  canvasH: number;
+  mode: 'single' | 'pair';
+  zoom: number;
+}) {
+  const [nat, setNat] = useState<{ w: number; h: number } | null>(null);
+  const widthFraction = mode === 'pair' ? 0.48 : 0.9;
+
+  let style: CSSProperties | undefined;
+  if (nat && canvasW > 60 && canvasH > 60) {
+    const fitScale = Math.min((canvasW * widthFraction) / nat.w, canvasH / nat.h);
+    const scale = fitScale * zoom;
+    style = {
+      width: Math.round(nat.w * scale),
+      height: Math.round(nat.h * scale),
+    };
+  }
+
+  return (
+    <img
+      src={page.imagePath}
+      alt={`Page ${page.pageNumber}`}
+      onLoad={(e) =>
+        setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })
+      }
+      style={style}
+      className="select-none rounded-lg object-contain shadow-2xl shadow-black/70 ring-1 ring-white/10"
+      draggable={false}
+      onError={(e) => {
+        (e.target as HTMLImageElement).style.opacity = '0.2';
+      }}
+    />
+  );
+}
+
 // ── Component ──────────────────────────────────────────────────────────────
 
 export function ComicBibleView() {
@@ -83,6 +143,9 @@ export function ComicBibleView() {
   const [fullscreen, setFullscreen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
+  const canvasRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
@@ -141,9 +204,31 @@ export function ComicBibleView() {
     return () => { cancelled = true; };
   }, [selectedStoryId]);
 
+  // Reset zoom when the story changes.
+  useEffect(() => {
+    setZoom(1);
+    setShowInfo(false);
+  }, [selectedStoryId]);
+
+  // ── Measure the reader canvas so artwork scales to the real container ──
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const rect = entries[0].contentRect;
+      setCanvasSize({ w: rect.width, h: rect.height });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [selectedStoryId, story, fullscreen]);
+
   // ── Save reading progress ──
   const saveProgress = useCallback(async (page: number) => {
     if (!isAuthenticated || !selectedStoryId) return;
+    // Optimistically reflect progress on the library card.
+    setStories((prev) => prev.map((s) =>
+      s.id === selectedStoryId ? { ...s, readingProgress: Math.max(s.readingProgress ?? 0, page) } : s,
+    ));
     try {
       await fetch('/api/comics/progress', {
         method: 'POST',
@@ -158,6 +243,10 @@ export function ComicBibleView() {
   // ── Navigation ──
   const totalPages = story?.pages.length ?? 0;
   const isSpreadLayout = story?.pageLayout === 'spread';
+  // 'spread' layout shows two separate pages side by side on desktop.
+  // NOTE: a story whose single uploaded image is itself a full two-page
+  // spread (like the current David & Goliath demo) still has pageCount 1 —
+  // it renders as ONE artwork and takes the wide single-image path.
   const pagesPerView = isSpreadLayout ? 2 : 1;
   const maxPage = Math.max(1, totalPages - pagesPerView + 1);
 
@@ -184,10 +273,12 @@ export function ComicBibleView() {
       if (e.key === 'ArrowLeft') goPrev();
       else if (e.key === 'ArrowRight') goNext();
       else if (e.key === 'Escape') setFullscreen(false);
+      else if (e.key === '+' || e.key === '=') setZoom((z) => ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, ZOOM_STEPS.indexOf(z) + 1)] ?? z);
+      else if (e.key === '-') setZoom((z) => ZOOM_STEPS[Math.max(0, ZOOM_STEPS.indexOf(z) - 1)] ?? z);
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  });
+  }, [maxPage, pagesPerView, selectedStoryId]);
 
   // ── Bookmark toggle ──
   async function toggleBookmark() {
@@ -225,6 +316,17 @@ export function ComicBibleView() {
     : [];
 
   const progress = totalPages > 0 ? Math.round((currentPage / maxPage) * 100) : 0;
+  const pageLabel = currentPages.length === 2
+    ? `Pages ${currentPages[0].pageNumber}–${currentPages[1].pageNumber} of ${totalPages}`
+    : `Page ${currentPage} of ${totalPages}`;
+
+  // ── Zoom helpers ──
+  function zoomIn() {
+    setZoom((z) => ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, ZOOM_STEPS.indexOf(z) + 1)] ?? z);
+  }
+  function zoomOut() {
+    setZoom((z) => ZOOM_STEPS[Math.max(0, ZOOM_STEPS.indexOf(z) - 1)] ?? z);
+  }
 
   // ── Handle story select ──
   function handleStorySelect(storyId: string) {
@@ -237,65 +339,87 @@ export function ComicBibleView() {
 
   // ── Render ──
   return (
-    <div className="min-h-full">
-      {/* ── Hero banner ── */}
-      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-[#1a0a2e] via-[#16213e] to-[#0B2545]">
-        {/* Decorative comic-book glow */}
-        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-saffron/10 blur-3xl" aria-hidden />
-        <div className="absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-indigo-500/10 blur-3xl" aria-hidden />
-        <div className="relative z-10 px-4 py-6 sm:px-6 sm:py-10">
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-white sm:text-3xl">
-            <BookImage className="h-7 w-7 text-saffron" />
-            <span className="text-saffron">Lordsbook</span> Comic Bible
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* ═══ CINEMATIC HERO BANNER ═══ */}
+      <div className="relative h-[168px] shrink-0 overflow-hidden border-b border-violet-500/20 sm:h-[210px] lg:h-[248px]">
+        <img
+          src="/comics/hero-banner.png"
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover object-[68%_center] sm:object-[center]"
+        />
+        {/* Legibility gradients — navy fade from the left + bottom blend */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0B0716]/95 via-[#0B0716]/55 to-transparent" aria-hidden />
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#0B0716] to-transparent" aria-hidden />
+
+        {/* Banner content */}
+        <div className="relative z-10 flex h-full max-w-2xl flex-col justify-center px-4 sm:px-8 lg:px-10">
+          <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.3em] text-white/70 sm:text-xs">
+            <BookImage className="h-3.5 w-3.5 text-amber-300" />
+            Lordsbook presents
+          </p>
+          <h1 className="mt-1 font-comic text-4xl leading-none tracking-wide sm:text-6xl lg:text-7xl">
+            <span
+              className="bg-gradient-to-b from-yellow-100 via-amber-300 to-yellow-600 bg-clip-text text-transparent drop-shadow-[0_3px_2px_rgba(0,0,0,0.55)]"
+              style={{ WebkitTextStroke: '1.5px rgba(30,15,55,0.85)' }}
+            >
+              Comic Bible
+            </span>
           </h1>
-          <p className="mt-0.5 text-lg font-semibold text-saffron/90 sm:text-xl">
+          <p className="mt-1.5 font-comic text-lg tracking-wide text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)] sm:text-2xl">
             The Bible in Graphic Stories
           </p>
-          <p className="mt-2 max-w-xl text-sm text-white/70">
+          <p className="mt-1 hidden max-w-md text-xs text-white/70 sm:block sm:text-sm">
             Experience God&rsquo;s Word through powerful illustrated comics — for all ages!
           </p>
         </div>
       </div>
 
-      {/* ── Integrated workspace: Library (left) + Reader (right) ── */}
-      <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-120px)] lg:overflow-hidden">
+      {/* ═══ WORKSPACE — Library (left) + Reader (right) ═══ */}
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
 
-        {/* ══ LEFT: Story Library ══ */}
-        <div className="flex w-full flex-col border-r border-border lg:w-[340px] lg:shrink-0 lg:overflow-y-auto">
+        {/* ─── LEFT: Story Library ─── */}
+        <aside className="flex w-full shrink-0 flex-col border-b border-border bg-[#0E0B1A]/60 lg:w-[350px] lg:border-b-0 lg:border-r lg:min-h-0 xl:w-[400px]">
           {/* Library header */}
-          <div className="border-b border-border px-4 py-3">
-            <h2 className="flex items-center gap-2 text-sm font-bold text-white">
-              <BookMarked className="h-4 w-4 text-saffron" />
+          <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
+            <h2 className="flex items-center gap-2 font-comic text-lg tracking-wide text-amber-300">
+              <BookMarked className="h-4 w-4" />
               Story Library
             </h2>
+            {!loading && stories.length > 0 && (
+              <span className="rounded-full bg-violet-600/20 px-2 py-0.5 text-[10px] font-bold text-violet-300 ring-1 ring-violet-500/40">
+                {stories.length} {stories.length === 1 ? 'story' : 'stories'}
+              </span>
+            )}
           </div>
 
-          {/* Filter tabs */}
-          <div className="flex flex-wrap gap-1.5 border-b border-border px-4 py-2.5">
+          {/* Filter pills */}
+          <div className="flex flex-wrap gap-1.5 border-b border-border/70 px-4 py-2.5">
             {([
-              { key: 'all', label: 'All' },
-              { key: 'OT', label: 'Old Testament' },
-              { key: 'NT', label: 'New Testament' },
-              { key: 'kids', label: 'For Kids' },
-            ] as const).map(({ key, label }) => (
+              { key: 'all', label: 'All Stories', icon: Sparkles },
+              { key: 'OT', label: 'Old Testament', icon: BookOpen },
+              { key: 'NT', label: 'New Testament', icon: BookOpen },
+              { key: 'kids', label: 'For Kids', icon: Baby },
+            ] as const).map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
                 onClick={() => setTab(key)}
                 className={cn(
-                  'rounded-full px-3 py-1 text-[11px] font-medium transition-colors',
+                  'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all',
                   tab === key
-                    ? 'bg-saffron text-white'
-                    : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80',
+                    ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
+                    : 'bg-white/5 text-white/55 ring-1 ring-white/10 hover:bg-white/10 hover:text-white',
                 )}
               >
+                <Icon className="h-3 w-3" />
                 {label}
               </button>
             ))}
           </div>
 
           {/* Search */}
-          <div className="border-b border-border px-4 py-2">
-            <div className="flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5">
+          <div className="border-b border-border/70 px-4 py-2">
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-background px-3 py-1.5 focus-within:ring-1 focus-within:ring-violet-500/60">
               <Search className="h-3.5 w-3.5 text-muted-foreground" />
               <input
                 value={search}
@@ -311,14 +435,14 @@ export function ComicBibleView() {
             </div>
           </div>
 
-          {/* Story cards — compact list format */}
-          <div className="flex-1 space-y-2 p-3">
+          {/* Story cards — illustrated covers */}
+          <div className="grid grid-cols-2 gap-2.5 p-3 lg:flex-1 lg:content-start lg:overflow-y-auto">
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-saffron" />
+              <div className="col-span-2 flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-violet-400" />
               </div>
             ) : stories.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-10 text-center">
+              <div className="col-span-2 flex flex-col items-center gap-2 py-10 text-center">
                 <BookImage className="h-8 w-8 text-muted-foreground/50" />
                 <p className="text-xs text-muted-foreground">
                   {search ? `No stories match "${search}".` : 'No stories published yet.'}
@@ -330,170 +454,261 @@ export function ComicBibleView() {
                   ? Math.round((s.readingProgress / Math.max(s.pageCount, 1)) * 100)
                   : 0;
                 const isSelected = s.id === selectedStoryId;
+                const hasStarted = (s.readingProgress ?? 0) > 0;
                 return (
                   <button
                     key={s.id}
                     onClick={() => handleStorySelect(s.id)}
                     className={cn(
-                      'group flex w-full items-start gap-3 rounded-xl border p-2.5 text-left transition-all',
+                      'group flex w-full flex-col overflow-hidden rounded-xl border bg-card text-left transition-all',
                       isSelected
-                        ? 'border-saffron/50 bg-saffron/10'
-                        : 'border-border bg-card hover:border-saffron/30 hover:bg-white/5',
+                        ? 'border-violet-500 shadow-lg shadow-violet-600/20 ring-2 ring-violet-500/50'
+                        : 'border-border hover:border-violet-500/50 hover:shadow-lg hover:shadow-violet-900/30',
                     )}
                   >
-                    {/* Cover thumbnail */}
-                    <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-background">
+                    {/* Cover artwork */}
+                    <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#120e20]">
                       {s.coverImagePath ? (
                         <img
                           src={s.coverImagePath}
                           alt={s.title}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1a0a2e] to-[#0B2545]">
-                          <BookImage className="h-5 w-5 text-white/20" />
+                          <BookImage className="h-8 w-8 text-white/20" />
                         </div>
                       )}
+                      {/* Bottom fade for legibility */}
+                      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent" aria-hidden />
                       {s.isKidsFriendly && (
-                        <span className="absolute right-0.5 top-0.5 rounded bg-saffron px-1 text-[8px] font-bold text-white">K</span>
+                        <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-amber-400 px-1.5 py-0.5 text-[8px] font-extrabold uppercase text-amber-950 shadow">
+                          <Baby className="h-2.5 w-2.5" /> Kids
+                        </span>
+                      )}
+                      {/* Bible reference chip on cover */}
+                      {bookLabel(s.bibleBook) && (
+                        <span className="absolute bottom-1.5 left-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-amber-300 backdrop-blur-sm">
+                          {bookLabel(s.bibleBook)} {s.bibleChapter}
+                        </span>
                       )}
                     </div>
-                    {/* Info */}
-                    <div className="min-w-0 flex-1">
-                      <p className={cn('truncate text-xs font-bold', isSelected ? 'text-saffron' : 'text-white')}>
+
+                    {/* Card body */}
+                    <div className="flex flex-1 flex-col gap-1 p-2">
+                      <p className={cn(
+                        'truncate font-comic text-sm tracking-wide',
+                        isSelected ? 'text-violet-300' : 'text-white',
+                      )}>
                         {s.title}
                       </p>
-                      {s.bibleBook && (
-                        <p className="text-[10px] text-saffron/70">
-                          {s.bibleBook} {s.bibleChapter}
-                        </p>
-                      )}
-                      <div className="mt-1 flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground">{s.pageCount} pages</span>
+                      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                        <span>{s.pageCount} {s.pageCount === 1 ? 'page' : 'pages'}</span>
                         {storyProgress > 0 && (
-                          <span className="text-[10px] text-saffron">{storyProgress}%</span>
+                          <span className={cn('font-semibold', storyProgress >= 100 ? 'text-emerald-400' : 'text-violet-300')}>
+                            {storyProgress}%
+                          </span>
                         )}
                       </div>
-                      {/* Mini progress bar */}
-                      {storyProgress > 0 && (
-                        <div className="mt-1 h-0.5 w-full overflow-hidden rounded-full bg-white/10">
-                          <div
-                            className={cn('h-full', storyProgress >= 100 ? 'bg-green-500' : 'bg-saffron')}
-                            style={{ width: `${storyProgress}%` }}
-                          />
-                        </div>
-                      )}
+                      {/* Progress bar */}
+                      <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+                        <div
+                          className={cn('h-full rounded-full transition-all', storyProgress >= 100 ? 'bg-emerald-500' : 'bg-violet-500')}
+                          style={{ width: `${storyProgress}%` }}
+                        />
+                      </div>
+                      {/* CTA */}
+                      <span
+                        className={cn(
+                          'mt-1 flex items-center justify-center gap-1 rounded-full py-1.5 text-[10px] font-bold transition-colors',
+                          isSelected
+                            ? 'bg-violet-500 text-white'
+                            : 'bg-violet-600/90 text-white group-hover:bg-violet-500',
+                        )}
+                      >
+                        <Play className="h-2.5 w-2.5 fill-current" />
+                        {hasStarted ? 'Continue Reading' : 'Start Reading'}
+                      </span>
                     </div>
-                    {/* Chevron */}
-                    <ChevronRight className={cn(
-                      'mt-3 h-3 w-3 shrink-0 transition-transform',
-                      isSelected ? 'text-saffron' : 'text-white/20 group-hover:text-white/50',
-                    )} />
                   </button>
                 );
               })
             )}
           </div>
-        </div>
+        </aside>
 
-        {/* ══ RIGHT: Comic Reader ══ */}
-        <div
+        {/* ─── RIGHT: Comic Reader ─── */}
+        <section
           id="comic-reader-panel"
           className={cn(
-            'flex flex-1 flex-col bg-[#0a0a0f]',
-            fullscreen && 'fixed inset-0 z-50 lg:static',
+            'relative flex min-w-0 flex-1 flex-col bg-[#0b0b14]',
+            fullscreen && 'fixed inset-0 z-50',
           )}
         >
           {!selectedStoryId || !story ? (
             /* Empty state — no story selected */
             <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-              <BookOpen className="h-16 w-16 text-white/10" />
+              <div className="rounded-3xl bg-violet-600/10 p-6 ring-1 ring-violet-500/20">
+                <BookOpen className="h-14 w-14 text-violet-400/40" />
+              </div>
               <div>
-                <h3 className="text-lg font-bold text-white/30">Select a story</h3>
-                <p className="mt-1 text-sm text-white/20">
+                <h3 className="font-comic text-2xl tracking-wide text-white/50">Select a story</h3>
+                <p className="mt-1 max-w-xs text-sm text-white/30">
                   Choose a comic story from the library to start reading.
                 </p>
               </div>
             </div>
           ) : storyLoading ? (
             <div className="flex flex-1 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-saffron" />
+              <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
             </div>
           ) : (
             <>
               {/* Reader toolbar */}
-              <div className="flex items-center gap-2 border-b border-white/10 bg-[#1a1a1e] px-4 py-2.5">
+              <div className="flex shrink-0 items-center gap-1.5 border-b border-white/10 bg-[#14121f] px-3 py-2 sm:px-4">
+                <button
+                  onClick={() => setSelectedStoryId(null)}
+                  className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white"
+                  aria-label="Back to library"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
                 <div className="min-w-0 flex-1">
-                  <span className="truncate text-sm font-bold text-white">
+                  <span className="block truncate font-comic text-base tracking-wide text-white sm:text-lg">
                     {story.translation?.title || story.title}
                   </span>
-                  {story.bibleBook && (
-                    <span className="ml-2 text-xs text-saffron">
-                      · {story.bibleBook} {story.bibleChapter}
+                  {bookLabel(story.bibleBook) && (
+                    <span className="block text-[10px] font-semibold text-amber-300/90">
+                      {bookLabel(story.bibleBook)} {story.bibleChapter}
                     </span>
                   )}
                 </div>
+
+                {/* Zoom controls */}
+                <div className="flex items-center gap-0.5 rounded-full bg-white/5 px-1 py-0.5 ring-1 ring-white/10">
+                  <button
+                    onClick={zoomOut}
+                    disabled={zoom <= 1}
+                    className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white disabled:opacity-25"
+                    aria-label="Zoom out"
+                  >
+                    <ZoomOut className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setZoom(1)}
+                    className="min-w-[38px] rounded-full px-1 py-0.5 text-[10px] font-bold text-white/70 hover:text-white"
+                    aria-label="Reset zoom"
+                    title="Reset zoom (fit)"
+                  >
+                    {Math.round(zoom * 100)}%
+                  </button>
+                  <button
+                    onClick={zoomIn}
+                    disabled={zoom >= ZOOM_STEPS[ZOOM_STEPS.length - 1]}
+                    className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white disabled:opacity-25"
+                    aria-label="Zoom in"
+                  >
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setShowInfo((v) => !v)}
+                  className={cn(
+                    'rounded-full p-1.5 hover:bg-white/10',
+                    showInfo ? 'text-violet-400' : 'text-white/60 hover:text-white',
+                  )}
+                  aria-label="Story info"
+                >
+                  <BookOpen className="h-4 w-4" />
+                </button>
                 <button
                   onClick={toggleBookmark}
-                  className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-saffron"
+                  className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-violet-400"
                   aria-label="Bookmark"
                 >
-                  {bookmarked ? <BookmarkCheck className="h-4 w-4 text-saffron" /> : <Bookmark className="h-4 w-4" />}
+                  {bookmarked ? <BookmarkCheck className="h-4 w-4 text-violet-400" /> : <Bookmark className="h-4 w-4" />}
                 </button>
                 <button
                   onClick={() => setFullscreen((f) => !f)}
                   className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white"
-                  aria-label="Fullscreen"
+                  aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
                 >
-                  <Maximize2 className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setSelectedStoryId(null)}
-                  className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white lg:hidden"
-                  aria-label="Close reader"
-                >
-                  <X className="h-4 w-4" />
+                  {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </button>
               </div>
 
-              {/* Comic pages display — fills available space */}
-              <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-black p-2 sm:p-4">
-                {/* Prev button (desktop) */}
-                <button
-                  onClick={goPrev}
-                  disabled={currentPage <= 1}
-                  className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition-all hover:bg-white/20 disabled:opacity-20"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
+              {/* Story info panel (collapsible) */}
+              {showInfo && (
+                <div className="max-h-44 shrink-0 overflow-y-auto border-b border-white/10 bg-[#14121f] px-4 py-3">
+                  <div className="mx-auto max-w-3xl space-y-2.5">
+                    {story.translation?.introduction && (
+                      <div>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-violet-400/80">Introduction</h3>
+                        <p className="mt-0.5 text-xs text-white/80">{story.translation.introduction}</p>
+                      </div>
+                    )}
+                    {story.keyVerse && (
+                      <div>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-violet-400/80">Key Verse</h3>
+                        <p className="mt-0.5 text-xs italic text-white/80">&ldquo;{story.keyVerse}&rdquo;</p>
+                        <p className="text-[10px] text-amber-300">— {story.keyVerseRef}</p>
+                      </div>
+                    )}
+                    {(story.translation?.lesson || story.lesson) && (
+                      <div>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-violet-400/80">What We Learn</h3>
+                        <p className="mt-0.5 text-xs text-white/80">{story.translation?.lesson || story.lesson}</p>
+                      </div>
+                    )}
+                    {(story.translation?.prayer || story.prayer) && (
+                      <div>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-violet-400/80">Prayer</h3>
+                        <p className="mt-0.5 text-xs italic text-white/80">{story.translation?.prayer || story.prayer}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
-                {/* Pages */}
-                <div className={cn(
-                  'flex h-full w-full items-center justify-center gap-1 sm:gap-2',
-                  pagesPerView === 2 ? 'flex-row' : 'flex-col',
-                )}>
+              {/* Comic artwork canvas — fills all available space; artwork
+                  is sized from the measured canvas (see ReaderImage) so it
+                  uses ~90% of the width and the full height whenever the
+                  aspect ratio permits. Grid-free flex with m-auto keeps the
+                  artwork centered when it fits AND scrollable when zoomed. */}
+              <div
+                ref={canvasRef}
+                className={cn(
+                  'relative flex overflow-auto bg-[#0d0d16]',
+                  fullscreen ? 'min-h-0 flex-1' : 'h-[58vh] min-h-0 lg:h-auto lg:min-h-0 lg:flex-1',
+                )}
+              >
+                <div className="m-auto flex items-center justify-center gap-1 p-2 sm:gap-2 sm:p-3">
                   {currentPages.map((page) => (
-                    <img
+                    <ReaderImage
                       key={page.id}
-                      src={page.imagePath}
-                      alt={`Page ${page.pageNumber}`}
-                      className={cn(
-                        'h-full w-auto max-w-full rounded-md object-contain',
-                        pagesPerView === 2 ? 'max-w-[49%]' : 'max-w-full',
-                      )}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.opacity = '0.2';
-                      }}
+                      page={page}
+                      canvasW={canvasSize.w}
+                      canvasH={canvasSize.h}
+                      mode={currentPages.length === 2 ? 'pair' : 'single'}
+                      zoom={zoom}
                     />
                   ))}
                 </div>
 
-                {/* Next button (desktop) */}
+                {/* Prev / Next overlays (desktop) */}
+                <button
+                  onClick={goPrev}
+                  disabled={currentPage <= 1}
+                  className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white shadow-lg ring-1 ring-white/20 backdrop-blur transition-all hover:bg-violet-600 hover:ring-violet-400 disabled:pointer-events-none disabled:opacity-0"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
                 <button
                   onClick={goNext}
                   disabled={currentPage >= maxPage}
-                  className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-saffron text-white backdrop-blur transition-all hover:brightness-110 disabled:opacity-20"
+                  className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg shadow-violet-600/40 ring-1 ring-violet-400/40 backdrop-blur transition-all hover:bg-violet-500 disabled:pointer-events-none disabled:opacity-0"
                   aria-label="Next page"
                 >
                   <ChevronRight className="h-5 w-5" />
@@ -501,17 +716,18 @@ export function ComicBibleView() {
               </div>
 
               {/* Bottom navigation bar */}
-              <div className="flex items-center gap-3 border-t border-white/10 bg-[#1a1a1e] px-4 py-3">
+              <div className="flex shrink-0 items-center gap-3 border-t border-white/10 bg-[#14121f] px-3 py-2.5 sm:px-4">
                 <button
                   onClick={goPrev}
                   disabled={currentPage <= 1}
-                  className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs text-white disabled:opacity-30 hover:bg-white/20"
+                  className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 disabled:opacity-30"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
-                  Prev
+                  <span className="hidden sm:inline">Previous</span>
+                  <span className="sm:hidden">Prev</span>
                 </button>
 
-                {/* Progress slider */}
+                {/* Progress slider + counter */}
                 <div className="flex flex-1 flex-col items-center gap-1">
                   <input
                     type="range"
@@ -523,26 +739,25 @@ export function ComicBibleView() {
                       setCurrentPage(p);
                       void saveProgress(p);
                     }}
-                    className="h-1 w-full max-w-xs cursor-pointer appearance-none rounded-full bg-white/10 accent-saffron"
+                    className="h-1 w-full max-w-sm cursor-pointer appearance-none rounded-full bg-white/10 accent-violet-500"
                     aria-label="Page slider"
                   />
-                  <span className="text-[10px] text-white/40">
-                    Page {currentPage} of {totalPages}
-                  </span>
+                  <span className="text-[10px] font-medium text-white/45">{pageLabel}</span>
                 </div>
 
                 <button
                   onClick={goNext}
                   disabled={currentPage >= maxPage}
-                  className="flex items-center gap-1 rounded-full bg-saffron px-3 py-1.5 text-xs text-white disabled:opacity-30 hover:brightness-110"
+                  className="flex items-center gap-1 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-violet-600/30 hover:bg-violet-500 disabled:opacity-30 disabled:shadow-none"
                 >
-                  Next
+                  <span className="hidden sm:inline">Next</span>
+                  <span className="sm:hidden">Next</span>
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
             </>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );

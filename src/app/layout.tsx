@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Sans, Bangers } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/components/providers/AuthProvider";
@@ -15,6 +15,16 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+});
+
+// Bangers — comic-book display font. Used ONLY by the Comic Bible section
+// (hero banner title, story card titles, reader headings) for the golden
+// comic-lettering look. Not part of the general Lordsbook type system.
+const bangers = Bangers({
+  variable: "--font-comic",
+  subsets: ["latin"],
+  weight: ["400"],
   display: "swap",
 });
 
@@ -115,7 +125,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${notoSans.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${notoSans.variable} ${bangers.variable} antialiased bg-background text-foreground`}
       >
         <AuthProvider>
           {children}

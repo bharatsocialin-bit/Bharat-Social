@@ -98,6 +98,27 @@ export default function Home() {
     );
   }
 
+  // Comic Bible is an immersive workspace — full available width, no right
+  // discovery rail, no max-width column. Library + reader sit side by side on
+  // desktop and fill the viewport height; on mobile they stack and scroll.
+  if (showComicBible) {
+    return (
+      <OnboardingGate>
+        <div className="flex min-h-screen bg-background text-foreground lg:h-screen lg:overflow-hidden">
+          <LeftSidebar onCompose={handleCompose} />
+          <main className="flex min-w-0 flex-1 flex-col pb-20 md:pb-0 lg:h-full lg:pb-0">
+            <MobileHeader onCompose={handleCompose} />
+            <div className="flex min-h-0 w-full flex-1 flex-col">
+              <ComicBibleView />
+            </div>
+          </main>
+          <MobileNav onCompose={handleCompose} />
+          <ComposeDialog open={composeOpen} onOpenChange={setComposeOpen} />
+        </div>
+      </OnboardingGate>
+    );
+  }
+
   return (
     <OnboardingGate>
       <div className="flex min-h-screen bg-background text-foreground">
