@@ -4,14 +4,15 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Users, FileText, Flag, Ban, TrendingUp, Clock,
   CheckCircle2, XCircle, AlertCircle, Trash2, Search,
-  Loader2, ChevronRight, ArrowLeft, Film, RotateCcw, Brain, Plus, Pencil, Award, Star,
+  Loader2, ChevronRight, ArrowLeft, Film, RotateCcw, Brain, Plus, Pencil, Award, Star, BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { EmptyState } from '@/components/social/EmptyState';
+import { ComicCmsTab } from '@/components/social/admin/comics/ComicCmsTab';
 
-type Tab = 'dashboard' | 'reports' | 'users' | 'shorts' | 'quiz' | 'badges';
+type Tab = 'dashboard' | 'reports' | 'users' | 'shorts' | 'comics' | 'quiz' | 'badges';
 
 interface Stats {
   counts: {
@@ -58,6 +59,7 @@ export function AdminPanel() {
             { key: 'reports', label: 'Reports', icon: Flag },
             { key: 'users', label: 'Users', icon: Users },
             { key: 'shorts', label: 'Shorts', icon: Film },
+            { key: 'comics', label: 'Comic Bible', icon: BookOpen },
             { key: 'quiz', label: 'Quiz', icon: Brain },
             { key: 'badges', label: 'Badges', icon: Award },
           ] as { key: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[]).map(({ key, label, icon: Icon }) => {
@@ -85,6 +87,7 @@ export function AdminPanel() {
         {tab === 'reports' && <ReportsTab />}
         {tab === 'users' && <UsersTab />}
         {tab === 'shorts' && <ShortsTab />}
+        {tab === 'comics' && <ComicCmsTab />}
         {tab === 'quiz' && <QuizAdminTab />}
         {tab === 'badges' && <BadgesAdminTab />}
       </div>
@@ -143,9 +146,11 @@ function DashboardTab() {
                   <p className="truncate text-sm font-medium text-white">{u.name}</p>
                   <p className="truncate text-xs text-muted-foreground">@{u.username}</p>
                 </div>
-                {u.role === 'admin' && (
+                {u.role === 'SUPER_ADMIN' ? (
+                  <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-medium text-rose-300 ring-1 ring-rose-500/30">super admin</span>
+                ) : u.role === 'admin' ? (
                   <span className="rounded-full bg-saffron/15 px-2 py-0.5 text-[10px] font-medium text-saffron">admin</span>
-                )}
+                ) : null}
                 <span className="text-xs text-muted-foreground">{new Date(u.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
               </li>
             ))}
@@ -416,9 +421,11 @@ function UsersTab() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-semibold text-white">{u.name}</p>
-                    {u.role === 'admin' && (
+                    {u.role === 'SUPER_ADMIN' ? (
+                      <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-medium text-rose-300 ring-1 ring-rose-500/30">super admin</span>
+                    ) : u.role === 'admin' ? (
                       <span className="rounded-full bg-saffron/15 px-1.5 py-0.5 text-[10px] font-medium text-saffron">admin</span>
-                    )}
+                    ) : null}
                   </div>
                   <p className="truncate text-xs text-muted-foreground">@{u.username}</p>
                 </div>
