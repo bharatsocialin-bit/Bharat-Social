@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, type CSSProperties } from 'react';
 import {
   BookImage, Search, Loader2, BookOpen, ChevronRight, ChevronLeft, X,
   Bookmark, BookmarkCheck, Maximize2, Minimize2, BookMarked, ZoomIn, ZoomOut,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getBook } from '@/lib/bible/books';
+import { buildViews, viewLabel, type ReaderView } from '@/lib/comics/views';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -27,6 +28,9 @@ interface ComicStory {
   ageGroup: string | null;
   pageLayout: string;
   pageCount: number;
+  // Number of assets flagged as pre-composed two-page spreads. When this
+  // equals pageCount the story's artwork is entirely spread-based.
+  spreadAssets: number;
   readingProgress: number | null;
   bookmarked: boolean;
 }
@@ -79,6 +83,10 @@ function bookLabel(usfm: string | null | undefined): string | null {
   return getBook(usfm)?.name ?? usfm;
 }
 
+// The reader view model (ReaderView / buildViews / viewLabel) lives in
+// @/lib/comics/views — shared with the Admin CMS preview so both always
+// agree on how pages and spreads are composed.
+
 // ── Reader image: sizes itself from the actual canvas box ──────────────────
 // The displayed width/height are computed from the measured reader canvas and
 // the image's intrinsic aspect ratio — no arbitrary pixel caps. A single
@@ -101,10 +109,16 @@ function ReaderImage({
 }) {
   const [nat, setNat] = useState<{ w: number; h: number } | null>(null);
   const widthFraction = mode === 'pair' ? 0.48 : 0.9;
+  // Padding of the canvas wrapper (p-3 = 12px per side). The fit is computed
+  // against the box INSIDE the padding so the artwork never overflows the
+  // scroll layer at 100% zoom.
+  const PAD = 12;
 
   let style: CSSProperties | undefined;
   if (nat && canvasW > 60 && canvasH > 60) {
-    const fitScale = Math.min((canvasW * widthFraction) / nat.w, canvasH / nat.h);
+    const availW = Math.max(60, canvasW - PAD * 2);
+    const availH = Math.max(60, canvasH - PAD * 2);
+    const fitScale = Math.min((availW * widthFraction) / nat.w, availH / nat.h);
     const scale = fitScale * zoom;
     style = {
       width: Math.round(nat.w * scale),
@@ -120,7 +134,10 @@ function ReaderImage({
         setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })
       }
       style={style}
-      className="select-none rounded-lg object-contain shadow-2xl shadow-black/70 ring-1 ring-white/10"
+      // max-w-none overrides Tailwind preflight (img { max-width: 100% })
+      // which would clamp the zoomed width while the inline height stays
+      // fixed — distorting the aspect ratio at zoom levels above fit.
+      className="max-w-none select-none rounded-lg object-contain shadow-2xl shadow-black/70 ring-1 ring-white/10"
       draggable={false}
       onError={(e) => {
         (e.target as HTMLImageElement).style.opacity = '0.2';
@@ -139,15 +156,31 @@ export function ComicBibleView() {
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [story, setStory] = useState<ComicStoryDetail | null>(null);
   const [storyLoading, setStoryLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  // Reader position is expressed as an index into the views array (see
+  // buildViews) — not a raw page number — so pre-composed spreads and
+  // future individual pages navigate identically.
+  const [viewIndex, setViewIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
+  // Desktop = Tailwind `lg` breakpoint: only there may individual page
+  // assets be paired side-by-side. Pre-composed spread assets render full
+  // width at every breakpoint.
+  const [isDesktop, setIsDesktop] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+
+  // Track the lg breakpoint so mobile always reads one page at a time.
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // ── Load stories list ──
   const loadStories = useCallback(async () => {
@@ -192,9 +225,18 @@ export function ComicBibleView() {
         if (cancelled) return;
         setStory(data.story);
         setBookmarked(data.story.bookmarked);
-        setCurrentPage(data.story.lastPageRead && data.story.lastPageRead > 0
-          ? Math.min(data.story.lastPageRead, data.story.pages.length)
-          : 1);
+        // Resume from saved progress: land on the view that contains the
+        // last page the user read.
+        const savedPage = data.story.lastPageRead;
+        const loadedViews = buildViews(data.story.pages ?? [], window.matchMedia('(min-width: 1024px)').matches);
+        if (savedPage && savedPage > 0 && loadedViews.length > 0) {
+          const idx = loadedViews.findIndex((v) =>
+            v.pages.some((p) => p.pageNumber === savedPage),
+          );
+          setViewIndex(idx >= 0 ? idx : 0);
+        } else {
+          setViewIndex(0);
+        }
       } catch {
         // Non-fatal.
       } finally {
@@ -242,28 +284,29 @@ export function ComicBibleView() {
 
   // ── Navigation ──
   const totalPages = story?.pages.length ?? 0;
-  const isSpreadLayout = story?.pageLayout === 'spread';
-  // 'spread' layout shows two separate pages side by side on desktop.
-  // NOTE: a story whose single uploaded image is itself a full two-page
-  // spread (like the current David & Goliath demo) still has pageCount 1 —
-  // it renders as ONE artwork and takes the wide single-image path.
-  const pagesPerView = isSpreadLayout ? 2 : 1;
-  const maxPage = Math.max(1, totalPages - pagesPerView + 1);
+  // Views are rebuilt whenever the story or breakpoint changes (a story with
+  // individual page assets pairs 2-up on desktop, 1-up on mobile; spread
+  // assets always stand alone).
+  const views = useMemo(
+    () => (story ? buildViews(story.pages, isDesktop) : []),
+    [story, isDesktop],
+  );
+  const currentView = views[viewIndex];
+  const maxViewIndex = Math.max(0, views.length - 1);
+
+  function goToView(index: number) {
+    const clamped = Math.min(maxViewIndex, Math.max(0, index));
+    setViewIndex(clamped);
+    const view = views[clamped];
+    if (view) void saveProgress(view.firstPage);
+  }
 
   function goPrev() {
-    setCurrentPage((p) => {
-      const next = Math.max(1, p - pagesPerView);
-      void saveProgress(next);
-      return next;
-    });
+    goToView(viewIndex - 1);
   }
 
   function goNext() {
-    setCurrentPage((p) => {
-      const next = Math.min(maxPage, p + pagesPerView);
-      void saveProgress(next);
-      return next;
-    });
+    goToView(viewIndex + 1);
   }
 
   // ── Keyboard navigation ──
@@ -278,7 +321,7 @@ export function ComicBibleView() {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [maxPage, pagesPerView, selectedStoryId]);
+  });
 
   // ── Bookmark toggle ──
   async function toggleBookmark() {
@@ -306,19 +349,15 @@ export function ComicBibleView() {
   }
 
   // ── Current pages to display ──
-  const currentPages = story
-    ? story.pages.filter((p) => {
-        if (pagesPerView === 2) {
-          return p.pageNumber === currentPage || p.pageNumber === currentPage + 1;
-        }
-        return p.pageNumber === currentPage;
-      })
-    : [];
+  const currentPages = currentView ? currentView.pages : [];
 
-  const progress = totalPages > 0 ? Math.round((currentPage / maxPage) * 100) : 0;
-  const pageLabel = currentPages.length === 2
-    ? `Pages ${currentPages[0].pageNumber}–${currentPages[1].pageNumber} of ${totalPages}`
-    : `Page ${currentPage} of ${totalPages}`;
+  // Progress across the story's REAL assets: share of views the reader has
+  // reached. A single-asset story simply reads "Spread 1 of 1".
+  const progress = views.length > 0
+    ? Math.round(((viewIndex + 1) / views.length) * 100)
+    : 0;
+  const singleView = views.length <= 1;
+  const label = viewLabel(currentView, viewIndex, views, totalPages);
 
   // ── Zoom helpers ──
   function zoomIn() {
@@ -503,7 +542,14 @@ export function ComicBibleView() {
                         {s.title}
                       </p>
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                        <span>{s.pageCount} {s.pageCount === 1 ? 'page' : 'pages'}</span>
+                        {/* Truthful asset count: a story whose assets are all
+                            pre-composed two-page spreads is labelled in
+                            spreads, not padded into fake page numbers. */}
+                        <span>
+                          {s.spreadAssets === s.pageCount && s.pageCount > 0
+                            ? `${s.pageCount} ${s.pageCount === 1 ? 'spread' : 'spreads'}`
+                            : `${s.pageCount} ${s.pageCount === 1 ? 'page' : 'pages'}`}
+                        </span>
                         {storyProgress > 0 && (
                           <span className={cn('font-semibold', storyProgress >= 100 ? 'text-emerald-400' : 'text-violet-300')}>
                             {storyProgress}%
@@ -674,86 +720,118 @@ export function ComicBibleView() {
               {/* Comic artwork canvas — fills all available space; artwork
                   is sized from the measured canvas (see ReaderImage) so it
                   uses ~90% of the width and the full height whenever the
-                  aspect ratio permits. Grid-free flex with m-auto keeps the
-                  artwork centered when it fits AND scrollable when zoomed. */}
+                  aspect ratio permits. The scroll layer uses the
+                  w-max/h-max + min-w-full/min-h-full pattern: artwork stays
+                  centred when it fits AND remains fully reachable by scroll
+                  when zoomed past the canvas edges. Prev/Next and the spread
+                  badge live on the outer wrapper so they stay pinned over
+                  the canvas viewport while scrolling. */}
               <div
-                ref={canvasRef}
                 className={cn(
-                  'relative flex overflow-auto bg-[#0d0d16]',
+                  'relative bg-[#0d0d16]',
                   fullscreen ? 'min-h-0 flex-1' : 'h-[58vh] min-h-0 lg:h-auto lg:min-h-0 lg:flex-1',
                 )}
               >
-                <div className="m-auto flex items-center justify-center gap-1 p-2 sm:gap-2 sm:p-3">
-                  {currentPages.map((page) => (
-                    <ReaderImage
-                      key={page.id}
-                      page={page}
-                      canvasW={canvasSize.w}
-                      canvasH={canvasSize.h}
-                      mode={currentPages.length === 2 ? 'pair' : 'single'}
-                      zoom={zoom}
-                    />
-                  ))}
+                <div ref={canvasRef} className="absolute inset-0 overflow-auto">
+                  <div className="flex h-max min-h-full w-max min-w-full items-center justify-center gap-1 p-3">
+                    {currentPages.map((page) => (
+                      <ReaderImage
+                        key={page.id}
+                        page={page}
+                        canvasW={canvasSize.w}
+                        canvasH={canvasSize.h}
+                        mode={currentView?.kind === 'pair' ? 'pair' : 'single'}
+                        zoom={zoom}
+                      />
+                    ))}
+                  </div>
                 </div>
 
-                {/* Prev / Next overlays (desktop) */}
-                <button
-                  onClick={goPrev}
-                  disabled={currentPage <= 1}
-                  className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white shadow-lg ring-1 ring-white/20 backdrop-blur transition-all hover:bg-violet-600 hover:ring-violet-400 disabled:pointer-events-none disabled:opacity-0"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={goNext}
-                  disabled={currentPage >= maxPage}
-                  className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg shadow-violet-600/40 ring-1 ring-violet-400/40 backdrop-blur transition-all hover:bg-violet-500 disabled:pointer-events-none disabled:opacity-0"
-                  aria-label="Next page"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
+                {/* Two-page spread badge — reflects real asset metadata
+                    (isSpread), never a count inferred from printed artwork. */}
+                {currentView?.kind === 'spread' && (
+                  <span className="pointer-events-none absolute left-1/2 top-3 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-300/90 ring-1 ring-amber-300/30 backdrop-blur-sm">
+                    Two-page spread
+                  </span>
+                )}
+
+                {/* Prev / Next overlays — hidden entirely when the story has
+                    a single view (no dead controls on screen). */}
+                {!singleView && (
+                  <>
+                    <button
+                      onClick={goPrev}
+                      disabled={viewIndex <= 0}
+                      className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white shadow-lg ring-1 ring-white/20 backdrop-blur transition-all hover:bg-violet-600 hover:ring-violet-400 disabled:pointer-events-none disabled:opacity-0"
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={goNext}
+                      disabled={viewIndex >= maxViewIndex}
+                      className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg shadow-violet-600/40 ring-1 ring-violet-400/40 backdrop-blur transition-all hover:bg-violet-500 disabled:pointer-events-none disabled:opacity-0"
+                      aria-label="Next page"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Bottom navigation bar */}
-              <div className="flex shrink-0 items-center gap-3 border-t border-white/10 bg-[#14121f] px-3 py-2.5 sm:px-4">
-                <button
-                  onClick={goPrev}
-                  disabled={currentPage <= 1}
-                  className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 disabled:opacity-30"
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Previous</span>
-                  <span className="sm:hidden">Prev</span>
-                </button>
+              <div className="relative z-10 flex shrink-0 items-center gap-3 border-t border-white/10 bg-[#14121f] px-3 py-2.5 sm:px-4">
+                {/* Prev / Next only render when there is something to
+                    navigate to — no permanently disabled dead buttons. */}
+                {!singleView && (
+                  <button
+                    onClick={goPrev}
+                    disabled={viewIndex <= 0}
+                    className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 disabled:opacity-30"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">Prev</span>
+                  </button>
+                )}
 
                 {/* Progress slider + counter */}
                 <div className="flex flex-1 flex-col items-center gap-1">
-                  <input
-                    type="range"
-                    min={1}
-                    max={maxPage}
-                    value={currentPage}
-                    onChange={(e) => {
-                      const p = parseInt(e.target.value, 10);
-                      setCurrentPage(p);
-                      void saveProgress(p);
-                    }}
-                    className="h-1 w-full max-w-sm cursor-pointer appearance-none rounded-full bg-white/10 accent-violet-500"
-                    aria-label="Page slider"
-                  />
-                  <span className="text-[10px] font-medium text-white/45">{pageLabel}</span>
+                  {!singleView && (
+                    <input
+                      type="range"
+                      min={1}
+                      max={views.length}
+                      value={viewIndex + 1}
+                      onChange={(e) => {
+                        const idx = parseInt(e.target.value, 10) - 1;
+                        setViewIndex(idx);
+                        const view = views[idx];
+                        if (view) void saveProgress(view.firstPage);
+                      }}
+                      className="h-1 w-full max-w-sm cursor-pointer appearance-none rounded-full bg-white/10 accent-violet-500"
+                      aria-label="Page slider"
+                    />
+                  )}
+                  {singleView && progress > 0 && progress < 100 && (
+                    <div className="h-1 w-full max-w-xs overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full rounded-full bg-violet-500" style={{ width: `${progress}%` }} />
+                    </div>
+                  )}
+                  <span className="text-[10px] font-medium text-white/45">{label}</span>
                 </div>
 
-                <button
-                  onClick={goNext}
-                  disabled={currentPage >= maxPage}
-                  className="flex items-center gap-1 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-violet-600/30 hover:bg-violet-500 disabled:opacity-30 disabled:shadow-none"
-                >
-                  <span className="hidden sm:inline">Next</span>
-                  <span className="sm:hidden">Next</span>
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </button>
+                {!singleView && (
+                  <button
+                    onClick={goNext}
+                    disabled={viewIndex >= maxViewIndex}
+                    className="flex items-center gap-1 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-violet-600/30 hover:bg-violet-500 disabled:opacity-30 disabled:shadow-none"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <span className="sm:hidden">Next</span>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             </>
           )}

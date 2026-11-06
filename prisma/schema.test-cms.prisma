@@ -1,0 +1,124 @@
+// TEMPORARY TEST SCHEMA for local end-to-end Comic Bible CMS verification.
+// This is NOT the production schema. It is a SQLite mirror of just the models
+// the Comic Bible CMS test needs, so the test can run without a live Postgres
+// / Supabase connection. The production schema stays at prisma/schema.prisma.
+//
+// To use: set TEST_DATABASE_URL in your .env (e.g. file:./db/test-cms.db),
+// then run: npx prisma db push --schema=prisma/schema.test-cms.prisma
+// This schema is NEVER used by the production app — Prisma only auto-discovers
+// prisma/schema.prisma. It exists solely for scripts/test-comic-cms-e2e.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("TEST_DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  username        String   @unique
+  passwordHash    String?
+  supabaseUserId  String?  @unique
+  name            String?
+  avatarGradient  String   @default("from-sky-500 to-indigo-500")
+  initials        String   @default("Ne")
+  role            String   @default("user")
+  suspended       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  moderationActions ModerationAction[] @relation("moderationAdmin")
+}
+
+model ModerationAction {
+  id             String   @id @default(cuid())
+  adminId        String
+  action         String
+  targetUserId   String?
+  targetStoryId  String?
+  description    String?
+  createdAt      DateTime @default(now())
+
+  admin User @relation("moderationAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+}
+
+model ComicStory {
+  id             String   @id @default(cuid())
+  title          String
+  testament      String
+  category       String
+  bibleBook      String?
+  bibleChapter   Int?
+  bibleVerse     Int?
+  coverImagePath String?
+  description    String?
+  keyVerse       String?
+  keyVerseRef    String?
+  lesson         String?
+  prayer         String?
+  isKidsFriendly Boolean  @default(false)
+  ageGroup       String?
+  pageLayout     String   @default("single")
+  published      Boolean  @default(false)
+  status         String   @default("draft")
+  publishedAt    DateTime?
+  publishedBy    String?
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  pages        ComicPage[]
+  translations ComicTranslation[]
+
+  @@index([testament])
+  @@index([published])
+  @@index([status])
+}
+
+model ComicPage {
+  id           String   @id @default(cuid())
+  storyId      String
+  pageNumber   Int
+  imagePath    String
+  isSpread     Boolean  @default(false)
+  width        Int?
+  height       Int?
+  fileSize     Int?
+  originalName String?
+  createdAt    DateTime @default(now())
+
+  story ComicStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, pageNumber])
+  @@index([storyId])
+}
+
+model ComicTranslation {
+  id           String   @id @default(cuid())
+  storyId      String
+  languageCode String
+  title        String
+  introduction String?
+  narration    String?
+  dialogue     String?
+  captions     String?
+  scripture    String?
+  lesson       String?
+  prayer       String?
+  status       String   @default("draft")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  story ComicStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, languageCode])
+  @@index([storyId])
+  @@index([languageCode])
+  @@index([status])
+}

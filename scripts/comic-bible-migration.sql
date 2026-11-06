@@ -88,7 +88,11 @@ CREATE TABLE IF NOT EXISTS "ComicReadingProgress" (
 CREATE INDEX IF NOT EXISTS "ComicReadingProgress_userId_idx" ON "ComicReadingProgress"("userId");
 
 -- ── Seed: David and Goliath demo story ─────────────────────────────────────
--- Uses the user-provided artwork at /public/comics/pages/david-goliath-p1.png
+-- Artwork: user-provided two-page spread at
+-- /public/comics/pages/david-goliath-spread-1.png (1536×1024, 1 asset).
+-- The story has exactly ONE uploaded asset (a pre-composed spread covering
+-- printed pages 1–2). Page count must always reflect REAL assets — do not
+-- pad with duplicates.
 INSERT INTO "ComicStory" ("id", "title", "testament", "category", "bibleBook", "bibleChapter", "bibleVerse", "coverImagePath", "description", "keyVerse", "keyVerseRef", "lesson", "prayer", "isKidsFriendly", "pageLayout", "published", "sortOrder", "createdAt", "updatedAt")
 VALUES (
   'comic-david-goliath',
@@ -98,7 +102,7 @@ VALUES (
   '1SA',
   17,
   45,
-  '/comics/pages/david-goliath-p1.png',
+  '/comics/pages/david-goliath-spread-1.png',
   'A young shepherd boy faces the giant Goliath with nothing but a sling and unshakeable faith in God. This is the timeless story of how true victory comes not from strength or size, but from trusting in the Lord.',
   'Victory does not come from strength or size, but from faith in God.',
   '1 Samuel 17:45',
@@ -110,17 +114,24 @@ VALUES (
   1,
   NOW(),
   NOW()
-) ON CONFLICT (id) DO NOTHING;
+) ON CONFLICT (id) DO UPDATE SET
+  "coverImagePath" = EXCLUDED."coverImagePath",
+  "updatedAt"      = NOW();
 
+-- Page 1 = the pre-composed two-page spread (isSpread = true).
+-- Upsert keeps this migration idempotent and migrates older databases that
+-- still point to the previous artwork (david-goliath-p1.png).
 INSERT INTO "ComicPage" ("id", "storyId", "pageNumber", "imagePath", "isSpread", "createdAt")
 VALUES (
   'comic-page-dg-1',
   'comic-david-goliath',
   1,
-  '/comics/pages/david-goliath-p1.png',
+  '/comics/pages/david-goliath-spread-1.png',
   true,
   NOW()
-) ON CONFLICT ("storyId", "pageNumber") DO NOTHING;
+) ON CONFLICT ("storyId", "pageNumber") DO UPDATE SET
+  "imagePath" = EXCLUDED."imagePath",
+  "isSpread"  = EXCLUDED."isSpread";
 
 INSERT INTO "ComicTranslation" ("id", "storyId", "languageCode", "title", "introduction", "narration", "status", "createdAt", "updatedAt")
 VALUES (

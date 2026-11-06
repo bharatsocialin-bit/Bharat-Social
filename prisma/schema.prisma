@@ -488,6 +488,13 @@ model ComicStory {
   ageGroup       String?  // "3-5" | "6-8" | "9-12" | null (for kids)
   pageLayout     String   @default("single") // "single" | "spread"
   published      Boolean  @default(false)
+  // Admin CMS publishing workflow: "draft" → "review" → "published".
+  // `published` stays the public-facing flag the reader filters on; it is
+  // set true ONLY by the admin publish action (which first validates that
+  // the story has valid artwork and required content).
+  status         String   @default("draft") // "draft" | "review" | "published"
+  publishedAt    DateTime?
+  publishedBy    String?  // Admin user id that approved the publish action
   sortOrder      Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -499,6 +506,7 @@ model ComicStory {
 
   @@index([testament])
   @@index([published])
+  @@index([status])
   @@index([isKidsFriendly])
   @@index([sortOrder])
 }
@@ -506,9 +514,15 @@ model ComicStory {
 model ComicPage {
   id           String   @id @default(cuid())
   storyId      String
-  pageNumber   Int      // 1-based reading order
-  imagePath    String   // Path under /public/comics/pages/
+  pageNumber   Int      // 1-based reading order (asset order — one spread asset = one page slot)
+  imagePath    String   // Storage URL/path: Supabase Storage public URL or /uploads/comics/… (dev fallback)
   isSpread     Boolean  @default(false) // true = pre-composed two-page spread
+  // Original artwork metadata captured at upload time. The original file is
+  // NEVER recompressed — these fields only describe it for the admin CMS.
+  width        Int?     // Intrinsic pixel width
+  height       Int?
+  fileSize     Int?     // Original file size in bytes
+  originalName String?  // Original upload filename (reference only)
   createdAt    DateTime @default(now())
 
   story ComicStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
@@ -531,7 +545,11 @@ model ComicTranslation {
   scripture    String?  // @db.Text — scripture quotations (from existing Bible DB)
   lesson       String?  // @db.Text — "What We Learn" (translated)
   prayer       String?  // @db.Text — Short prayer (translated)
-  status       String   @default("draft") // "draft" | "published" | "coming_soon"
+  // Admin CMS translation workflow:
+  //   "not_started" (no row) | "draft" | "in_review" | "published"
+  // Legacy value "coming_soon" may exist from earlier seeds and is treated
+  // as "draft" wherever status is interpreted.
+  status       String   @default("draft")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

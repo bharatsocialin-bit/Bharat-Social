@@ -12,7 +12,11 @@ export async function GET(request: Request) {
     const kids = searchParams.get('kids') === '1';
     const search = searchParams.get('search')?.trim();
 
-    const where: Record<string, unknown> = { published: true };
+    // Defense in depth for the "only valid artwork reaches the public
+    // library" rule: publish validation already enforces ≥1 page; this
+    // filter additionally guarantees a published story with zero page
+    // assets (e.g. artwork deleted after publish) never lists publicly.
+    const where: Record<string, unknown> = { published: true, pages: { some: {} } };
     if (testament) where.testament = testament;
     if (kids) where.isKidsFriendly = true;
     if (search) {
@@ -30,6 +34,22 @@ export async function GET(request: Request) {
         _count: { select: { pages: true } },
       },
     });
+
+    // Count pre-composed spread assets per story (truthful page metadata:
+    // a story whose asset is one wide spread still has pageCount 1 — it is
+    // one file that artwork-wise covers two printed pages).
+    const storyIds = stories.map((s) => s.id);
+    const spreadCounts = new Map<string, number>();
+    if (storyIds.length > 0) {
+      const spreadRows = await db.comicPage.groupBy({
+        by: ['storyId'],
+        where: { storyId: { in: storyIds }, isSpread: true },
+        _count: { _all: true },
+      });
+      for (const row of spreadRows) {
+        spreadCounts.set(row.storyId, row._count._all);
+      }
+    }
 
     // Get user's reading progress + bookmarks (if authenticated).
     const user = await getCurrentUser();
@@ -59,6 +79,7 @@ export async function GET(request: Request) {
         ageGroup: s.ageGroup,
         pageLayout: s.pageLayout,
         pageCount: s._count.pages,
+        spreadAssets: spreadCounts.get(s.id) ?? 0,
         readingProgress: progressMap.get(s.id)?.lastPageRead ?? null,
         bookmarked: bookmarkSet.has(s.id),
       })),
