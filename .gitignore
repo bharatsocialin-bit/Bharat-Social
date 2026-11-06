@@ -79,6 +79,16 @@ prisma/migrations/
 # ── Shorts uploads (user-uploaded videos — never commit) ──
 /public/uploads/
 
+# ── Comic Bible CMS test artifacts (local e2e test only) ──
+/db/test-cms.db
+/db/test-cms.db-journal
+
+# ── Local PostgreSQL dev cluster data (NEVER commit — binary + machine-specific) ──
+/scripts/pgdev/pgdata/
+
+# ── Git bundles (transfer artifacts — never commit) ──
+*.bundle
+
 # ── Skills directory (scaffold-only, not application source) ──
 /skills/
 

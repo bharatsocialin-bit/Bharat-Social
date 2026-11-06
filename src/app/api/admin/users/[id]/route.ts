@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
+import { requireAdmin, isSuperAdmin } from '@/lib/auth/requireAdmin';
 
 // PATCH /api/admin/users/[id] — suspend or reactivate a user
 export async function PATCH(
@@ -26,9 +26,23 @@ export async function PATCH(
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }
 
-    // Prevent suspending the last admin
-    if (action === 'suspend' && targetUser.role === 'admin') {
-      const adminCount = await db.user.count({ where: { role: 'admin', suspended: false } });
+    // ── SUPER_ADMIN protection ──
+    // The primary SUPER_ADMIN cannot be suspended, demoted or otherwise
+    // modified by an ordinary admin. Only another SUPER_ADMIN may act on a
+    // SUPER_ADMIN account. This guards the platform owner from rogue admins.
+    if (isSuperAdmin(targetUser.role) && !isSuperAdmin(admin!.role)) {
+      return NextResponse.json(
+        { error: 'The primary Super Admin account is protected and cannot be modified by an ordinary administrator.' },
+        { status: 403 },
+      );
+    }
+
+    // Prevent suspending the last admin (count both admin + SUPER_ADMIN as
+    // active administrators so the platform always has at least one).
+    if (action === 'suspend' && (targetUser.role === 'admin' || isSuperAdmin(targetUser.role))) {
+      const adminCount = await db.user.count({
+        where: { role: { in: ['admin', 'SUPER_ADMIN'] }, suspended: false },
+      });
       if (adminCount <= 1) {
         return NextResponse.json(
           { error: 'Cannot suspend the last administrator.' },
